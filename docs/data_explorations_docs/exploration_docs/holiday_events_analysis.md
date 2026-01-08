@@ -199,14 +199,6 @@ transferred     0                 0.0%
 - **No typos detected**: Event descriptions like "Carnaval" spelled consistently (not "Carnival", "Carnavale", etc.)
 - **Hierarchical integrity**: No "Local" events with `locale_name = "Ecuador"` (which would be illogical)
 
-**⚠️ Data Type Issue (minor)**:
-- `date` stored as `object` (string) instead of `datetime64`
-- **Fix required**:
-  ```python
-  df_holidays['date'] = pd.to_datetime(df_holidays['date'])
-  ```
-- **Impact**: Without conversion, date-based joins and filtering will fail
-
 ### Potential Issues
 
 **1. Multiple Events Per Date**:
