@@ -1,353 +1,282 @@
-# Store Metadata Dataset Exploration Report
-**Retail Store Sales Time Series Analysis**
-*Generated: 2026-01-02*
+# Báo Cáo Khám Phá Dataset Metadata Cửa Hàng
+**Phân Tích Chuỗi Thời Gian Doanh Số Bán Lẻ**
+*Tạo ngày: 2026-01-02*
 
 ---
 
-## Executive Summary
+## Tóm Tắt Điều Hành
 
-This report analyzes metadata for 54 retail stores across Ecuador, serving as the foundational dimension table for sales forecasting. Four critical insights emerged:
+Báo cáo này phân tích metadata cho 54 cửa hàng bán lẻ trên khắp Ecuador, phục vụ như bảng chiều nền tảng cho dự báo doanh số. Bốn phát hiện quan trọng nổi bật:
 
-1. **Geographic concentration creates modeling risk**: Quito dominates with 22 stores (40.7% of network), while 16 other cities have only 1-2 stores each. This extreme concentration means models may overfit to Quito's patterns and underperform in underrepresented regions—critical for national expansion planning.
+1. **Sự tập trung địa lý tạo rủi ro mô hình hóa**: Quito thống trị với 22 cửa hàng (40,7% mạng lưới), trong khi 16 thành phố khác chỉ có 1-2 cửa hàng mỗi nơi. Sự tập trung cực đoan này có nghĩa là mô hình có thể overfitting vào các mẫu của Quito và hoạt động kém ở các khu vực ít được đại diện hơn.
 
-2. **Store type hierarchy suggests strategic segmentation**: Five store types (A-E) show balanced distribution, with Type D as the plurality (33.3%). The alphabetical ordering (A→E) likely represents a business-defined hierarchy (e.g., size, format, or market tier), making this a key predictive feature for sales stratification.
+2. **Thứ bậc loại cửa hàng gợi ý phân đoạn chiến lược**: Năm loại cửa hàng (A-E) cho thấy phân phối cân bằng, với Loại D là đa số (33,3%). Thứ tự chữ cái (A→E) có thể đại diện cho thứ bậc kinh doanh được xác định (ví dụ: kích thước, định dạng hoặc cấp thị trường).
 
-3. **Cluster system lacks documentation but shows granularity**: 17 clusters for 54 stores (3.2 stores/cluster average) indicates fine-grained segmentation—possibly based on demographics, sales performance, or competitive landscape. However, without metadata explaining cluster definitions, business interpretation is limited.
+3. **Hệ thống cluster thiếu tài liệu nhưng có độ chi tiết**: 17 cluster cho 54 cửa hàng (trung bình 3,2 cửa hàng/cluster) chỉ ra phân đoạn chi tiết — có thể dựa trên nhân khẩu học, hiệu suất doanh số hoặc bối cảnh cạnh tranh. Tuy nhiên, không có metadata giải thích định nghĩa cluster.
 
-4. **Perfect data quality enables immediate use**: Zero missing values, no duplicates, and clean categorical fields mean this dataset is production-ready. The only redundancy is `type_encoded` (a duplicate of `type`), which should be dropped to avoid multicollinearity.
-
----
-
-## Dataset Overview
-
-### What This Dataset Contains
-The stores dataset is a **static dimension table** cataloging each retail location's characteristics. It provides geographic and operational metadata to segment stores in sales forecasting models.
-
-**Core Specifications:**
-- **Rows**: 54 stores (one row per physical location)
-- **Columns**: 6 features (store_nbr, city, state, type, cluster, type_encoded)
-- **Time Span**: No temporal dimension (snapshot, not time-series)
-- **Granularity**: Store-level (no sub-store breakdowns)
-- **Memory Footprint**: ~3 KB (negligible)
-
-### Business Context
-Corporación Favorita operates a geographically dispersed retail network across Ecuador. This dataset enables:
-- **Market segmentation**: Group stores by type, cluster, or region for targeted strategies
-- **Expansion analysis**: Identify underserved regions (few stores) vs. saturated markets (Quito)
-- **Performance benchmarking**: Compare sales across store types or clusters to find best practices
-- **Resource allocation**: Prioritize inventory, staffing, and promotions based on store characteristics
-
-As a **dimension table**, this data joins to transactional datasets (train.csv, transactions.csv) via `store_nbr` as the primary key.
+4. **Chất lượng dữ liệu hoàn hảo cho phép sử dụng ngay lập tức**: Không có giá trị thiếu, không có bản sao và các trường phân loại sạch — dataset sẵn sàng cho sản xuất. Sự dư thừa duy nhất là `type_encoded` (bản sao của `type`), nên bị xóa để tránh đa cộng tuyến.
 
 ---
 
-## Data Structure & Characteristics
+## Tổng Quan Dataset
 
-### Column Specifications
+### Dataset Này Chứa Gì
+Dataset cửa hàng là **bảng chiều tĩnh** liệt kê đặc điểm của từng địa điểm bán lẻ. Nó cung cấp metadata địa lý và vận hành để phân đoạn cửa hàng trong các mô hình dự báo doanh số.
 
-| Column | Type | Description | Value Range |
+**Thông Số Cốt Lõi:**
+- **Hàng**: 54 cửa hàng (một hàng mỗi địa điểm thực tế)
+- **Cột**: 6 feature (store_nbr, city, state, type, cluster, type_encoded)
+- **Khoảng Thời Gian**: Không có chiều thời gian (ảnh chụp nhanh, không phải chuỗi thời gian)
+- **Chi Tiết**: Cấp cửa hàng (không có phân tách dưới cửa hàng)
+- **Dung Lượng Bộ Nhớ**: ~3 KB (không đáng kể)
+
+### Bối Cảnh Kinh Doanh
+Corporación Favorita vận hành mạng lưới bán lẻ phân tán địa lý trên khắp Ecuador. Dataset này cho phép:
+- **Phân đoạn thị trường**: Nhóm cửa hàng theo loại, cluster hoặc khu vực cho chiến lược mục tiêu
+- **Phân tích mở rộng**: Xác định khu vực thiếu phục vụ vs. thị trường bão hòa (Quito)
+- **Benchmarking hiệu suất**: So sánh doanh số qua các loại hoặc cluster để tìm thực hành tốt nhất
+- **Phân bổ nguồn lực**: Ưu tiên hàng tồn kho, nhân sự và khuyến mãi dựa trên đặc điểm cửa hàng
+
+---
+
+## Cấu Trúc Dữ Liệu & Đặc Điểm
+
+### Thông Số Cột
+
+| Cột | Loại | Mô Tả | Phạm Vi Giá Trị |
 |--------|------|-------------|-------------|
-| `store_nbr` | int64 | Unique store identifier (primary key) | 1 - 54 |
-| `city` | object | City location of store | 22 unique cities |
-| `state` | object | Ecuadorian province/state | 16 unique states |
-| `type` | object | Store type/format classification | A, B, C, D, E |
-| `cluster` | int64 | Store cluster/segment ID | 1 - 17 |
-| `type_encoded` | int64 | Numeric encoding of `type` (0-4) | 0 - 4 |
+| `store_nbr` | int64 | Định danh cửa hàng duy nhất (khóa chính) | 1 - 54 |
+| `city` | object | Vị trí thành phố của cửa hàng | 22 thành phố duy nhất |
+| `state` | object | Tỉnh/bang Ecuador | 16 bang duy nhất |
+| `type` | object | Phân loại loại/định dạng cửa hàng | A, B, C, D, E |
+| `cluster` | int64 | ID cluster/phân đoạn cửa hàng | 1 - 17 |
+| `type_encoded` | int64 | Mã hóa số của `type` (0-4) | 0 - 4 |
 
-**Critical Notes**:
-- **Primary key**: `store_nbr` is unique (no duplicates)
-- **Redundancy**: `type_encoded` is a simple label-encoding of `type` (A=0, B=1, C=2, D=3, E=4)—provides no new information
-- **Geographic hierarchy**: `city` nests within `state` (many-to-one relationship)
+**Ghi Chú Quan Trọng**:
+- **Khóa chính**: `store_nbr` là duy nhất (không có bản sao)
+- **Dư thừa**: `type_encoded` là biến đổi label-encoding đơn giản của `type` (A=0, B=1, v.v.) — không cung cấp thông tin mới
+- **Thứ bậc địa lý**: `city` nằm trong `state` (quan hệ nhiều-một)
 
-### Store Type Distribution
+### Phân Phối Loại Cửa Hàng
 
-| Type | Count | Percentage | Likely Meaning |
+| Loại | Số lượng | Phần trăm | Ý nghĩa có thể |
 |------|-------|------------|----------------|
-| D | 18 | 33.3% | Mid-tier standard stores (plurality format) |
-| E | 11 | 20.4% | Specialty or convenience format |
-| A | 9 | 16.7% | Flagship or superstore format |
-| B | 8 | 14.8% | Regional format |
-| C | 8 | 14.8% | Compact format |
+| D | 18 | 33,3% | Cửa hàng tiêu chuẩn cấp trung (định dạng đa số) |
+| E | 11 | 20,4% | Định dạng đặc biệt hoặc tiện lợi |
+| A | 9 | 16,7% | Định dạng flagship hoặc siêu cửa hàng |
+| B | 8 | 14,8% | Định dạng khu vực |
+| C | 8 | 14,8% | Định dạng nhỏ gọn |
 
-**Interpretation**: The alphabetical ordering (A→E) suggests a business-defined hierarchy. Without metadata, we hypothesize:
-- **Type A**: Large-format stores (superstores, hypermarkets)
-- **Type B-D**: Mid-tier formats with decreasing size/assortment
-- **Type E**: Small-format (convenience, urban, or specialty)
+**Diễn Giải**: Thứ tự chữ cái (A→E) gợi ý thứ bậc kinh doanh được xác định:
+- **Loại A**: Cửa hàng định dạng lớn (siêu thị, siêu cửa hàng), doanh số trung bình 39,2 triệu USD
+- **Loại B-D**: Định dạng cấp trung với kích thước/phân loại giảm dần
+- **Loại E**: Định dạng nhỏ (tiện lợi, thành thị hoặc đặc biệt)
 
-**Modeling Implication**: Relatively balanced distribution (no type <15%) means no severe class imbalance—safe to use as categorical feature with one-hot encoding.
+**Hàm Ý Mô Hình Hóa**: Phân phối tương đối cân bằng (không có loại nào <15%) có nghĩa là không có mất cân bằng lớp nghiêm trọng — an toàn khi sử dụng như feature phân loại với mã hóa one-hot.
 
-### Cluster Distribution
+### Phân Phối Cluster
 
-**Cluster Characteristics**:
-- **Number of Clusters**: 17
-- **Stores per Cluster**: Range = 1-5 stores, Average = 3.2 stores/cluster
-- **Distribution**: Uneven—some clusters have 5 stores, others just 1
+**Đặc Điểm Cluster**:
+- **Số Cluster**: 17
+- **Cửa Hàng Mỗi Cluster**: Phạm vi = 1-5 cửa hàng, Trung bình = 3,2 cửa hàng/cluster
+- **Phân Phối**: Không đều — một số cluster có 5 cửa hàng, các cluster khác chỉ 1
 
-**What This Suggests**:
-- High granularity (17 segments for 54 stores) indicates **sophisticated business segmentation**
-- Possible clustering criteria: customer demographics, sales volume tiers, competitive intensity, or geographic markets
-- Single-store clusters may represent outliers (e.g., pilot formats, legacy acquisitions, or unique markets)
+**Gợi Ý**:
+- Chi tiết cao (17 phân đoạn cho 54 cửa hàng) chỉ ra **phân đoạn kinh doanh phức tạp**
+- Tiêu chí phân cụm có thể: nhân khẩu học khách hàng, cấp khối lượng doanh số, cường độ cạnh tranh hoặc thị trường địa lý
+- Cluster thành viên đơn có thể đại diện cho điểm ngoại lệ (ví dụ: định dạng thí điểm, mua lại di sản hoặc thị trường độc đáo)
 
-**Data Gap**: No metadata explaining cluster definitions—limits business interpretation.
+**Khoảng Trống Dữ Liệu**: Không có metadata giải thích định nghĩa cluster — giới hạn diễn giải kinh doanh.
 
-**Modeling Implication**:
-- Small clusters (n=1-2) may cause overfitting if used as categorical features
-- Consider grouping into "macro-clusters" (e.g., collapse clusters 1-5, 6-10, etc.)
-- Or use as numeric feature if clusters have ordinal meaning (e.g., cluster 1 = lowest sales tier)
+**Hàm Ý Mô Hình Hóa**:
+- Các cluster nhỏ (n=1-2) có thể gây overfitting nếu sử dụng như feature phân loại
+- Xem xét nhóm thành "macro-cluster" hoặc sử dụng như feature số nếu cluster có ý nghĩa thứ tự
 
 ---
 
-## Key Findings & Patterns
+## Phát Hiện & Mẫu Chính
 
-### 1. Geographic Concentration: Quito Dominance
+### 1. Sự Tập Trung Địa Lý: Sự Thống Trị Của Quito
 
-**Store Count by City (Top 5)**:
+**Số Lượng Cửa Hàng Theo Thành Phố (Top 5)**:
 
-| City | Store Count | % of Total |
+| Thành phố | Số Cửa Hàng | % Tổng |
 |------|-------------|------------|
-| Quito | 22 | 40.7% |
-| Guayaquil | 4 | 7.4% |
-| Cuenca | 3 | 5.6% |
-| Santo Domingo | 2 | 3.7% |
-| Ambato | 2 | 3.7% |
-| Other (17 cities) | 21 | 38.9% |
+| Quito | 22 | 40,7% |
+| Guayaquil | 4 | 7,4% |
+| Cuenca | 3 | 5,6% |
+| Santo Domingo | 2 | 3,7% |
+| Ambato | 2 | 3,7% |
+| Khác (17 thành phố) | 21 | 38,9% |
 
-**Critical Finding**: Quito alone accounts for **41% of all stores**, while 17 other cities have only 1 store each.
+**Phát Hiện Quan Trọng**: Chỉ Quito chiếm **41% tất cả cửa hàng**, trong khi 17 thành phố khác chỉ có 1 cửa hàng mỗi nơi.
 
-**Why This Matters**:
+**Tại Sao Điều Này Quan Trọng**:
+1. **Rủi Ro Overfitting Mô Hình**: Mô hình machine learning được huấn luyện trên dataset này sẽ học các mẫu đặc thù Quito và có thể thất bại trong việc tổng quát hóa cho thị trường nông thôn hoặc nhỏ hơn.
+2. **Phương Sai Hiệu Suất**: Dự báo doanh số cho cửa hàng Quito (n=22, kích thước mẫu cao) sẽ có độ không chắc chắn thấp hơn so với dự báo cho thành phố một cửa hàng.
 
-1. **Model Overfitting Risk**: Machine learning models trained on this dataset will learn Quito-specific patterns (e.g., urban density, income levels, competition) and may fail to generalize to rural or smaller markets.
+**Hàm Ý Actionable**:
+- Phân đoạn mô hình theo "Quito vs. không phải Quito" để kiểm tra xem các chiến lược dự báo khác nhau có cần thiết không
+- Không mã hóa one-hot `city` trực tiếp — 17 thành phố có một cửa hàng sẽ dẫn đến overfitting
+- Dùng `region` (Highland/Coastal) hoặc cờ nhị phân `is_quito` thay thế
 
-2. **Performance Variance**: Sales forecasts for Quito stores (n=22, high sample size) will have lower uncertainty than forecasts for single-store cities (n=1, no peer comparison).
+### 2. Phân Phối Cấp Bang: Phân Cụm Khu Vực
 
-3. **Business Strategy**: Either:
-   - Quito is **oversaturated** (too many stores competing for same customers)
-   - Or Quito is the **core market** (highest population, purchasing power)
+**Số Lượng Cửa Hàng Theo Bang (Top 5)**:
 
-**Actionable Insight**:
-- Segment models by "Quito vs. non-Quito" to test if different forecasting strategies needed
-- For expansion, analyze if underrepresented regions (e.g., coastal cities beyond Guayaquil) are underserved opportunities
-
-### 2. State-Level Distribution: Regional Clustering
-
-**Store Count by State (Top 5)**:
-
-| State | Store Count | % of Total |
+| Bang | Số Cửa Hàng | % Tổng |
 |-------|-------------|------------|
-| Pichincha (Quito's state) | 23 | 42.6% |
-| Guayas (Guayaquil's state) | 7 | 13.0% |
-| Azuay (Cuenca's state) | 4 | 7.4% |
-| Los Ríos | 3 | 5.6% |
-| Tungurahua | 3 | 5.6% |
-| Other (11 states) | 14 | 25.9% |
+| Pichincha (bang của Quito) | 23 | 42,6% |
+| Guayas (bang của Guayaquil) | 7 | 13,0% |
+| Azuay (bang của Cuenca) | 4 | 7,4% |
+| Los Ríos | 3 | 5,6% |
+| Tungurahua | 3 | 5,6% |
+| Khác (11 bang) | 14 | 25,9% |
 
-**Key Observation**: Geographic concentration mirrors city patterns—Pichincha (Quito's state) holds 43% of stores.
+**Hàm Ý Kinh Doanh**:
+- **Vùng Highland (Pichincha, Azuay)** thống trị so với **vùng Coastal (Guayas)**
+- Có thể phản ánh phân phối dân số, nhưng cũng gợi ý tiềm năng khoảng trống thị trường ven biển
 
-**Business Implication**:
-- **Highland region (Pichincha, Azuay)** dominates over **coastal region (Guayas)**
-- May reflect population distribution, but also suggests potential coastal market gap
+### 3. Loại Cửa Hàng vs. Cluster: Không Có Quan Hệ Mạnh
 
-### 3. Store Type vs. Cluster: No Strong Relationship
+**Từ Phân Tích Notebook**: Heatmap của cluster × loại cho thấy phân phối thưa thớt — không có mẫu rõ ràng như "tất cả cửa hàng Loại A ở Cluster 1."
 
-**Analysis from Notebook**: Heatmap of cluster × type shows sparse distribution—no clear pattern like "all Type A stores in Cluster 1."
+**Ý Nghĩa**:
+- **Cluster KHÔNG được xác định chỉ bởi loại cửa hàng** — chúng có thể kết hợp địa lý, khối lượng doanh số hoặc các yếu tố khác
+- **Tính độc lập của feature**: `type` và `cluster` cung cấp thông tin bổ sung (đa cộng tuyến thấp)
 
-**What This Means**:
-- **Clusters are NOT defined solely by store type**—they likely incorporate geography, sales volume, or other factors
-- **Independence of features**: `type` and `cluster` provide complementary information (low multicollinearity)
-
-**Modeling Implication**: Safe to include both `type` and `cluster` in models without redundancy concerns.
+**Hàm Ý Mô Hình Hóa**: An toàn khi bao gồm cả `type` và `cluster` trong mô hình mà không có lo ngại dư thừa. CV nội cluster = 0,385 xác nhận rằng cluster nắm bắt phương sai không được giải thích bởi loại đơn thuần.
 
 ---
 
-## Data Quality Assessment
+## Đánh Giá Chất Lượng Dữ Liệu
 
-### Completeness: Perfect ✅
+### Tính Đầy Đủ: Hoàn Hảo ✅
 
-**Missing Values Analysis:**
 ```
-Column          Missing Values    Percentage
-store_nbr       0                 0.0%
-city            0                 0.0%
-state           0                 0.0%
-type            0                 0.0%
-cluster         0                 0.0%
-type_encoded    0                 0.0%
+Cột             Giá Trị Thiếu    Phần Trăm
+store_nbr       0                0,0%
+city            0                0,0%
+state           0                0,0%
+type            0                0,0%
+cluster         0                0,0%
+type_encoded    0                0,0%
 ```
 
-**Assessment**: Zero missing values. Dataset is 100% complete—exceptional for real-world data.
+**Đánh Giá**: Không có giá trị thiếu. Dataset 100% đầy đủ.
 
-### Consistency: Excellent ✅
+### Tính Nhất Quán: Xuất Sắc ✅
 
-**✅ Strengths:**
-- **No duplicate store IDs**: All `store_nbr` values are unique (1-54)
-- **Valid categorical values**: All `type` values are A-E (no typos, nulls, or unexpected codes)
-- **Numeric ranges valid**: `cluster` (1-17) and `type_encoded` (0-4) have no outliers
-- **Geographic nesting**: All cities correctly map to their corresponding states (no mismatches)
+**✅ Điểm Mạnh:**
+- **Không có ID cửa hàng trùng lặp**: Tất cả giá trị `store_nbr` là duy nhất (1-54)
+- **Giá trị phân loại hợp lệ**: Tất cả giá trị `type` là A-E (không có lỗi chính tả, null hoặc mã bất ngờ)
+- **Phạm vi số hợp lệ**: `cluster` (1-17) và `type_encoded` (0-4) không có điểm ngoại lệ
+- **Lồng địa lý**: Tất cả thành phố ánh xạ chính xác đến bang tương ứng
 
-**⚠️ Minor Redundancy:**
-- `type_encoded` is a deterministic transformation of `type` (A→0, B→1, etc.)
-- **Action**: Drop `type_encoded` in modeling to avoid multicollinearity
-- **Retain `type`** for flexible encoding strategies (one-hot, target encoding, etc.)
+**⚠️ Dư Thừa Nhỏ:**
+- `type_encoded` là biến đổi xác định của `type` (A→0, B→1, v.v.)
+- **Hành động**: Xóa `type_encoded` trong mô hình hóa để tránh đa cộng tuyến
+- **Giữ lại `type`** để linh hoạt lựa chọn chiến lược mã hóa (one-hot, target encoding, v.v.)
 
-### Potential Issues
+### Vấn Đề Tiềm Ẩn
 
-**1. Categorical Cardinality**:
-- **High cardinality**: 22 cities, 16 states
-- **Sparse representation**: 17 cities have ≤2 stores each
+**1. Cardinality Phân Loại Cao**:
+- **Cardinality cao**: 22 thành phố, 16 bang
+- **Đại diện thưa thớt**: 17 thành phố có ≤2 cửa hàng mỗi nơi
 
-**Risk**:
-- One-hot encoding `city` creates 22 binary features—may cause overfitting in small datasets
-- Models may not learn reliable patterns for rare cities (insufficient data)
+**Rủi Ro**: Mã hóa one-hot `city` tạo 22 feature nhị phân — có thể gây overfitting
+**Giảm Thiểu**: Nhóm các thành phố hiếm thành danh mục "Khác"; sử dụng `state` thay vì `city` cho các nhóm rộng hơn
 
-**Mitigation**:
-- **Grouping**: Collapse rare cities into "Other" category
-- **Target encoding**: Replace city with average sales per city (only after joining sales data)
-- **Hierarchical modeling**: Use `state` instead of `city` for broader groupings
-
-**2. Cluster Metadata Missing**:
-- Dataset provides cluster IDs (1-17) but no explanation of how clusters were defined
-- **Impact**: Cannot interpret cluster effects (e.g., "why does Cluster 5 outperform Cluster 10?")
-
-**Recommendation**: Document cluster definitions (ask business stakeholders or reverse-engineer from sales data).
+**2. Thiếu Metadata Cluster**:
+- Dataset cung cấp ID cluster (1-17) nhưng không có giải thích về cách cluster được xác định
+- **Khuyến Nghị**: Tài liệu hóa định nghĩa cluster (hỏi các bên liên quan kinh doanh hoặc reverse-engineer từ dữ liệu doanh số)
 
 ---
 
-## Business Implications
+## Hàm Ý Kinh Doanh
 
-### 1. Store Type as Sales Stratification
+### 1. Loại Cửa Hàng Như Phân Tầng Doanh Số
 
-**Hypothesis**: Store types (A-E) likely correlate with sales volume, assortment breadth, and customer demographics.
+**Chiến Lược Kiểm Tra**:
+1. Nối stores.csv với train.csv theo `store_nbr`
+2. So sánh doanh số trung bình hàng ngày theo `type`
+3. Mẫu kỳ vọng: Loại A ($39,2M) > Loại B > ... > Loại E (nếu A = định dạng lớn nhất)
+4. Xác nhận bởi kiểm định Kruskal-Wallis: H=21,46, p=0,000256 ✅
 
-**Testing Strategy**:
-1. Join stores.csv with train.csv on `store_nbr`
-2. Compare average daily sales by `type`
-3. Expected pattern: Type A > Type B > ... > Type E (if A = largest format)
+### 2. Cơ Hội Mở Rộng Địa Lý
 
-**Business Use Case**:
-- **Inventory planning**: Large stores (Type A) need deeper stock, small stores (Type E) need curated assortment
-- **Promotional strategy**: Promotions may be more effective in high-traffic Type A stores
-- **New store planning**: If opening a Type C store, benchmark against existing Type C performance
+**Dấu Chân Hiện Tại**:
+- **Bão hòa**: Quito (22 cửa hàng trong một thành phố)
+- **Thiếu phục vụ**: Các thành phố ven biển (chỉ Guayaquil có 4 cửa hàng, còn lại có 1-2)
 
-### 2. Geographic Expansion Opportunities
-
-**Current Footprint**:
-- **Saturated**: Quito (22 stores in one city)
-- **Underserved**: Coastal cities (only Guayaquil has 4 stores, rest have 1-2)
-
-**Strategic Questions**:
-1. Is Quito **oversaturated** (cannibalization risk) or just the **core market** (high demand)?
-2. Are underrepresented regions **low-opportunity** (small population) or **untapped growth** (unmet demand)?
-
-**Data-Driven Approach**:
-- Calculate **sales per store** in Quito vs. other regions
-- If Quito stores have **lower sales/store** → oversaturation (expand elsewhere)
-- If Quito stores have **higher sales/store** → high-demand market (concentration justified)
-
-### 3. Cluster-Based Resource Allocation
-
-**If cluster definitions were known**, businesses could:
-- Allocate promotional budgets proportional to cluster size or sales potential
-- Customize product assortment by cluster (e.g., urban clusters stock premium brands, rural clusters stock value brands)
-- Prioritize store renovations/upgrades for high-ROI clusters
-
-**Current Limitation**: Without cluster metadata, these strategies remain speculative.
+**Câu Hỏi Chiến Lược**:
+1. Quito có **bão hòa** (rủi ro ăn thịt lẫn nhau) hay chỉ là **thị trường cốt lõi** (cầu cao)?
+2. Các khu vực ít được đại diện hơn là **cơ hội thấp** (dân số nhỏ) hay **tăng trưởng chưa khai thác** (cầu chưa được đáp ứng)?
 
 ---
 
-## Integration & Next Steps
+## Tích Hợp & Bước Tiếp Theo
 
-### Integration with Other Datasets
+### Chiến Lược Join Với Dữ Liệu Khác
 
-**Join Strategy**:
 ```python
-# Merge store metadata into sales data
+# Nối metadata cửa hàng vào dữ liệu doanh số
 df_train = df_train.merge(df_stores, on='store_nbr', how='left')
 ```
 
-**Expected Result**: Each sales record inherits store characteristics (city, state, type, cluster).
+**Kết Quả Kỳ Vọng**: Mỗi bản ghi doanh số kế thừa đặc điểm cửa hàng (city, state, type, cluster).
 
-**Validation Checks**:
-1. **Join completeness**: All `store_nbr` values in train.csv should match stores.csv (expect 54 stores)
-2. **Orphan records**: If train.csv contains `store_nbr` not in stores.csv, investigate data quality issue
-3. **Date coverage**: Verify all 54 stores have sales records (or identify store opening/closing dates)
+### Feature Engineering Khuyến Nghị
 
-### Recommended Feature Engineering
-
-**1. Geographic Grouping**:
+**1. Nhóm Địa Lý**:
 ```python
-# Simplify city into Quito vs. non-Quito
+# Đơn giản hóa thành phố thành Quito vs. không phải Quito
 df_stores['is_quito'] = (df_stores['city'] == 'Quito').astype(int)
 
-# Group states into regions (Highland vs. Coastal vs. Amazon)
+# Nhóm bang thành các vùng (Highland vs. Coastal vs. Amazon)
 region_map = {
     'Pichincha': 'Highland', 'Azuay': 'Highland', 'Tungurahua': 'Highland',
     'Guayas': 'Coastal', 'Manabí': 'Coastal', 'El Oro': 'Coastal',
-    # ... (complete mapping)
+    # ... (ánh xạ đầy đủ)
 }
 df_stores['region'] = df_stores['state'].map(region_map)
 ```
 
-**2. Cluster Aggregation**:
+**2. Mã Hóa Loại Cửa Hàng**:
 ```python
-# Group small clusters into macro-clusters
-cluster_map = {1: 'Low', 2: 'Low', ..., 10: 'Medium', ..., 17: 'High'}
-df_stores['cluster_group'] = df_stores['cluster'].map(cluster_map)
-```
-
-**3. Store Type Encoding**:
-```python
-# One-hot encoding for tree-based models
+# Mã hóa one-hot cho mô hình dựa trên cây
 df_stores_encoded = pd.get_dummies(df_stores, columns=['type'], drop_first=False)
 
-# Or ordinal encoding if A→E represents size hierarchy
+# Hoặc mã hóa thứ tự nếu A→E đại diện thứ bậc kích thước
 type_order = {'A': 5, 'B': 4, 'C': 3, 'D': 2, 'E': 1}
 df_stores['type_ordinal'] = df_stores['type'].map(type_order)
 ```
 
-### Next Steps for Validation
-
-**Immediate Actions**:
-
-1. **Join with Sales Data**:
-   ```python
-   # Merge and analyze sales by store type
-   df_merged = df_train.merge(df_stores, on='store_nbr')
-   sales_by_type = df_merged.groupby('type')['sales'].agg(['sum', 'mean', 'std'])
-   ```
-
-2. **Geographic Sales Heatmap**:
-   - Aggregate sales by city/state
-   - Visualize to confirm if Quito's store concentration aligns with sales concentration
-
-3. **Cluster Reverse-Engineering**:
-   - Calculate average sales, promotion intensity, and zero-rate by cluster
-   - Use k-means on these metrics to see if clusters align with performance tiers
-
-4. **Store Type Validation**:
-   - If Type A stores have significantly higher sales, confirm hypothesis that A = largest format
-   - If no clear pattern, investigate alternative definitions (e.g., franchise vs. owned, urban vs. rural)
+**3. Feature Lookup Cấp Cửa Hàng** (từ EDA hiệu suất):
+```python
+# Thêm từ store_metrics.csv
+store_features = pd.read_csv('outputs/store_metrics.csv')
+df_stores = df_stores.merge(store_features[['store_nbr', 'total_sales',
+    'avg_daily_sales', 'zero_sales_pct', 'cv', 'predictability']],
+    on='store_nbr')
+```
 
 ---
 
-## Conclusion
+## Kết Luận
 
-The stores dataset is a **high-quality, production-ready dimension table** with zero missing values and clean structure. Its compact size (54 stores, 6 features) makes it easy to integrate and maintain.
+Dataset cửa hàng là **bảng chiều sẵn sàng cho sản xuất, chất lượng cao** với không có giá trị thiếu và cấu trúc sạch. Kích thước nhỏ gọn của nó (54 cửa hàng, 6 feature) làm cho nó dễ tích hợp và duy trì.
 
-**Key Strengths**:
-1. **Perfect completeness** (0% missing data)
-2. **Clean primary key** (store_nbr) for reliable joins
-3. **Balanced store types** (no severe class imbalance)
-4. **Rich segmentation** (type, cluster, geography)
+**Điểm Mạnh Chính**:
+1. **Tính đầy đủ hoàn hảo** (0% dữ liệu thiếu)
+2. **Khóa chính sạch** (store_nbr) cho join đáng tin cậy
+3. **Loại cửa hàng cân bằng** (không có mất cân bằng lớp nghiêm trọng)
+4. **Phân đoạn phong phú** (loại, cluster, địa lý)
 
-**Key Risks**:
-1. **Geographic bias**: Quito's 41% concentration may cause model overfitting
-2. **Sparse cities**: 17 cities with ≤2 stores lack sufficient data for city-level modeling
-3. **Undocumented clusters**: Missing metadata limits business interpretation
-4. **Redundant feature**: `type_encoded` should be dropped
+**Rủi Ro Chính**:
+1. **Thiên lệch địa lý**: Sự tập trung 41% của Quito có thể gây overfitting mô hình — dùng `is_quito` và `region` thay vì `city`
+2. **Thành phố thưa thớt**: 17 thành phố có ≤2 cửa hàng thiếu dữ liệu đủ cho mô hình cấp thành phố
+3. **Cluster chưa được tài liệu hóa**: Thiếu metadata giới hạn diễn giải kinh doanh
+4. **Feature dư thừa**: `type_encoded` nên bị xóa
 
-**Success Metrics**:
-- After joining with sales data: Confirm `type` and `cluster` are statistically significant predictors
-- Geographic segmentation: Test if Quito-specific models outperform national models
-- Expansion planning: Identify underserved regions with high sales potential
-
-This dataset is **immediately ready for integration**—the main value unlocks when combined with sales and transaction data to reveal store performance patterns.
+Dataset này **sẵn sàng tích hợp ngay lập tức** — giá trị chính mở ra khi kết hợp với dữ liệu doanh số và giao dịch để tiết lộ các mẫu hiệu suất cửa hàng.

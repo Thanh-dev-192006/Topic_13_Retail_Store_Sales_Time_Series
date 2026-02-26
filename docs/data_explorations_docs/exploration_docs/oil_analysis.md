@@ -1,259 +1,226 @@
-# Oil Price Dataset Exploration Report
-**Retail Store Sales Time Series Analysis**
-*Generated: 2026-01-02*
+# Báo Cáo Khám Phá Dataset Giá Dầu
+**Phân Tích Chuỗi Thời Gian Doanh Số Bán Lẻ**
+*Tạo ngày: 2026-01-02*
 
 ---
 
-## Executive Summary
+## Tóm Tắt Điều Hành
 
-This report analyzes 1,218 daily crude oil price records (WTI) spanning 4.6 years, serving as a critical macroeconomic indicator for retail forecasting. Three key insights emerged:
+Báo cáo này phân tích 1.218 bản ghi giá dầu thô hàng ngày (WTI) trong 4,6 năm, phục vụ như chỉ số kinh tế vĩ mô quan trọng cho dự báo bán lẻ. Ba phát hiện chính nổi bật:
 
-1. **High volatility with regime shifts**: Oil prices ranged from $26.19 to $110.62 per barrel (323% swing), with mean at $67.71 but median at $53.19—indicating a right-skewed distribution driven by 2013-2014 high-price periods before the 2015-2016 oil crash.
+1. **Biến động cao với sự thay đổi chế độ**: Giá dầu dao động từ 26,19 USD đến 110,62 USD mỗi thùng (biên độ 323%), với mean ở 67,71 USD nhưng median ở 53,19 USD — chỉ ra phân phối lệch phải do giai đoạn giá cao 2013-2014 trước vụ sụp đổ dầu 2015-2016.
 
-2. **Minimal missing data, structural gaps**: Only 43 missing values (3.5%), occurring on weekends and market holidays when oil trading ceases. Forward-fill imputation maintains time-series continuity without introducing bias.
+2. **Dữ liệu thiếu tối thiểu, khoảng trống có cấu trúc**: Chỉ 43 giá trị thiếu (3,5%), xảy ra vào cuối tuần và ngày nghỉ thị trường khi giao dịch dầu dừng. Điền tiếp (forward-fill) duy trì tính liên tục chuỗi thời gian mà không tạo ra thiên lệch.
 
-3. **Ecuador-specific relevance amplified**: As an oil-exporting economy, Ecuador's retail sector is hypersensitive to oil price fluctuations—impacting transportation costs, consumer purchasing power, and government spending on subsidies. The 2015-2016 crash (prices dropping 76% from peak) likely triggered structural changes in consumer behavior.
-
----
-
-## Dataset Overview
-
-### What This Dataset Contains
-The oil dataset provides daily West Texas Intermediate (WTI) crude oil prices, serving as an **exogenous macroeconomic feature** to explain retail sales trends beyond store-level factors.
-
-**Core Specifications:**
-- **Rows**: 1,218 daily records
-- **Columns**: 2 features (date, dcoilwtico)
-- **Time Span**: January 1, 2013 to August 31, 2017 (4.6 years)
-- **Granularity**: Daily prices (calendar days, not just trading days)
-- **Memory Footprint**: ~19 KB (negligible)
-
-### Business Context
-Ecuador's economy is heavily oil-dependent (petroleum exports represent ~40% of export earnings). Oil price fluctuations directly impact:
-- **Government revenue** → affects public sector wages and subsidies
-- **Inflation rates** → influences consumer purchasing power
-- **Transportation costs** → impacts retail logistics and product pricing
-- **Currency stability** → Ecuador uses USD but economic confidence correlates with oil
-
-For retail forecasting, oil prices act as a **leading indicator** that captures macroeconomic shocks not visible in store-level data.
+3. **Sự liên quan đặc thù Ecuador được khuếch đại**: Là nền kinh tế xuất khẩu dầu, lĩnh vực bán lẻ Ecuador cực kỳ nhạy cảm với biến động giá dầu — ảnh hưởng đến chi phí vận chuyển, sức mua tiêu dùng và chi tiêu chính phủ cho trợ cấp. Vụ sụp đổ 2015-2016 (giá giảm 76% từ đỉnh) có thể đã kích hoạt những thay đổi cấu trúc trong hành vi tiêu dùng.
 
 ---
 
-## Data Structure & Characteristics
+## Tổng Quan Dataset
 
-### Column Specifications
+### Dataset Này Chứa Gì
+Dataset dầu cung cấp giá dầu thô WTI (West Texas Intermediate) hàng ngày, phục vụ như **feature kinh tế vĩ mô ngoại sinh** để giải thích xu hướng doanh số bán lẻ ngoài các yếu tố cấp cửa hàng.
 
-| Column | Type | Description | Value Range |
+**Thông Số Cốt Lõi:**
+- **Hàng**: 1.218 bản ghi hàng ngày
+- **Cột**: 2 feature (date, dcoilwtico)
+- **Khoảng Thời Gian**: 1 tháng 1 năm 2013 đến 31 tháng 8 năm 2017 (4,6 năm)
+- **Chi Tiết**: Giá hàng ngày (ngày lịch, không chỉ ngày giao dịch)
+- **Dung Lượng Bộ Nhớ**: ~19 KB (không đáng kể)
+
+### Bối Cảnh Kinh Doanh
+Nền kinh tế Ecuador phụ thuộc nặng vào dầu (xuất khẩu dầu chiếm ~40% thu nhập xuất khẩu). Biến động giá dầu trực tiếp ảnh hưởng đến:
+- **Doanh thu chính phủ** → ảnh hưởng tiền lương và trợ cấp khu vực công
+- **Tỷ lệ lạm phát** → ảnh hưởng sức mua tiêu dùng
+- **Chi phí vận chuyển** → ảnh hưởng logistics bán lẻ và giá sản phẩm
+- **Ổn định tiền tệ** → Ecuador dùng USD nhưng niềm tin kinh tế tương quan với dầu
+
+Đối với dự báo bán lẻ, giá dầu hoạt động như **chỉ số dẫn** nắm bắt các cú sốc kinh tế vĩ mô không thấy trong dữ liệu cấp cửa hàng.
+
+---
+
+## Cấu Trúc Dữ Liệu & Đặc Điểm
+
+### Thông Số Cột
+
+| Cột | Loại | Mô Tả | Phạm Vi Giá Trị |
 |--------|------|-------------|-------------|
-| `date` | object (datetime) | Calendar date | 2013-01-01 to 2017-08-31 |
-| `dcoilwtico` | float64 | Daily crude oil price (USD/barrel) | $26.19 - $110.62 |
-
-**Critical Notes**:
-- **Global indicator**: Single price applies to all stores/products on a given day
-- **Daily frequency**: Includes weekends/holidays (when markets are closed, prices are missing)
-- **WTI benchmark**: West Texas Intermediate, the US crude oil pricing standard
+| `date` | object (datetime) | Ngày lịch | 2013-01-01 đến 2017-08-31 |
+| `dcoilwtico` | float64 | Giá dầu thô hàng ngày (USD/thùng) | 26,19 USD - 110,62 USD |
 
 ---
 
-## Key Findings & Patterns
+## Phát Hiện & Mẫu Chính
 
-### 1. Oil Price Distribution & Volatility
+### 1. Phân Phối & Biến Động Giá Dầu
 
-**Statistical Profile:**
-- **Mean Price**: $67.71 per barrel
-- **Median Price**: $53.19 per barrel
-- **Standard Deviation**: $25.63 (38% of mean—extremely high volatility)
-- **Range**: $26.19 to $110.62 (323% difference between min and max)
+**Hồ Sơ Thống Kê:**
+- **Giá Trung Bình**: 67,71 USD mỗi thùng
+- **Giá Trung Vị**: 53,19 USD mỗi thùng
+- **Độ Lệch Chuẩn**: 25,63 (38% mean — biến động cực cao)
+- **Phạm Vi**: 26,19 USD đến 110,62 USD (chênh lệch 323% giữa min và max)
 
-**What This Means:**
+**Ý Nghĩa**:
+Khoảng cách 21% giữa mean và median tiết lộ **độ lệch phải** — vài giai đoạn giá cao (2013-2014) làm tăng trung bình. Phân phối cho thấy:
+- Đuôi dài của giá thấp trong vụ sụp đổ dầu 2015-2016
+- Tập trung xung quanh mức 45-55 USD trong giai đoạn phục hồi (2016-2017)
+- Không có giá nào theo phân phối chuẩn — kỳ vọng phá vỡ cấu trúc trong chuỗi thời gian
 
-The 21% gap between mean and median reveals **right skew**—a few high-price periods (2013-2014) inflate the average. The distribution shows:
-- Long tail of low prices during 2015-2016 oil crash
-- Concentration around $45-$55 range in recovery period (2016-2017)
-- No prices follow normal distribution—expect structural breaks in time series
+**Hàm Ý Mô Hình Hóa**:
+1. Không giả định giá dầu dừng — dùng sai phân hoặc biến đổi log
+2. Xem xét mô hình chuyển chế độ để nắm bắt các kỷ nguyên giá cao/thấp khác biệt
+3. Hiệu ứng trễ có thể xảy ra (ví dụ: cú sốc giá dầu hôm nay ảnh hưởng doanh số 7-30 ngày sau)
 
-**Modeling Implications:**
-1. Do not assume oil prices are stationary—use differencing or log-transformation
-2. Consider regime-switching models to capture distinct high/low price eras
-3. Lagged effects likely (e.g., oil price shock today impacts sales 7-30 days later)
+### 2. Mẫu Giá Trị Thiếu: Cuối Tuần & Ngày Nghỉ
 
-### 2. Missing Value Pattern: Weekends & Holidays
+**Quy Mô Vấn Đề:**
+- **Giá Trị Thiếu**: 43 bản ghi (3,5% dataset)
+- **Nguyên Nhân**: Thị trường hợp đồng tương lai dầu đóng cửa vào cuối tuần và ngày nghỉ liên bang Mỹ
 
-**Scale of the Issue:**
-- **Missing Values**: 43 records (3.5% of dataset)
-- **Cause**: Oil futures markets close on weekends and US federal holidays
+**Chiến Lược Xử Lý:**
+- **Điền tiếp (ffill)**: Mang giá biết cuối cùng tiếp tục (giả định giá tồn tại cho đến khi thị trường mở lại)
+- **Điền ngược (bfill)**: Cho bất kỳ NaN đầu nào
 
-**Handling Strategy:**
-- **Forward fill (ffill)**: Carry last known price forward (assumes prices persist until market reopens)
-- **Backward fill (bfill)**: For any leading NaNs (e.g., if dataset starts on weekend)
+**Tại Sao Điều Này Hoạt Động:**
+- Giá dầu có **động lượng** — giá mở cửa thứ 2 thường gần với giá đóng cửa thứ 6
+- Phương án thay thế (nội suy) sẽ làm mịn nhân tạo biến động
+- Xóa hàng sẽ gây lệch ngày với dữ liệu doanh số
 
-**Why This Works:**
-- Oil prices exhibit **momentum**—Monday's opening price typically close to Friday's close
-- Alternative (interpolation) would artificially smooth volatility
-- Dropping rows would misalign dates with sales data
+**Sau Khi Điền**: Không còn giá trị thiếu.
 
-**After Imputation**: Zero missing values remain.
+### 3. Xu Hướng Dài Hạn: Vụ Sụp Đổ Dầu 2015-2016
 
-### 3. Long-Term Trend: The 2015-2016 Oil Crash
+**Các Giai Đoạn Chế Độ Quan Sát:**
 
-**Observed Regime Shifts:**
-
-| Period | Price Range | Economic Context |
+| Giai Đoạn | Phạm Vi Giá | Bối Cảnh Kinh Tế |
 |--------|-------------|------------------|
-| 2013-2014 | $90-$110/barrel | Pre-crash boom (OPEC production high, demand strong) |
-| 2015-2016 | $26-$50/barrel | **Crash period** (oversupply, weak global demand) |
-| 2017 | $45-$55/barrel | Partial recovery (OPEC production cuts) |
+| 2013-2014 | 90-110 USD/thùng | Giai đoạn bùng nổ trước sụp đổ (sản xuất OPEC cao, cầu mạnh) |
+| 2015-2016 | 26-50 USD/thùng | **Giai đoạn sụp đổ** (cung dư thừa, cầu toàn cầu yếu), 96 ngày sụp đổ (<40 USD) |
+| 2017 | 45-55 USD/thùng | Phục hồi một phần (cắt giảm sản xuất OPEC) |
 
-**Business Implications for Ecuador**:
+**Hàm Ý Kinh Doanh Cho Ecuador**:
+Trong **vụ sụp đổ 2015-2016** (giá giảm 76% từ 110 USD xuống 26 USD):
+- **Khủng hoảng ngân sách chính phủ**: Ecuador mất hàng tỷ trong doanh thu xuất khẩu dầu
+- **Biện pháp thắt lưng buộc bụng**: Cắt giảm chi tiêu công làm giảm thu nhập khả dụng
+- **Tác động bán lẻ**: Người tiêu dùng trì hoãn mua hàng lớn, chuyển sang thương hiệu giá trị
 
-During the **2015-2016 crash** (prices dropped 76% from $110 to $26):
-- **Government budget crisis**: Ecuador lost billions in oil export revenue
-- **Austerity measures**: Public spending cuts reduced disposable income
-- **Currency pressure**: Despite using USD, economic confidence plummeted
-- **Retail impact**: Consumers delayed big-ticket purchases, shifted to value brands
-
-**Why This Matters for Forecasting**:
-- Sales models trained on 2013-2014 data will fail in 2015-2016 without oil price feature
-- Promotions may have been less effective during crash (consumers prioritized essentials)
-- Store-level differences may widen (urban vs. rural, luxury vs. discount)
+**Tại Sao Điều Này Quan Trọng Cho Dự Báo**:
+- Mô hình doanh số được huấn luyện trên dữ liệu 2013-2014 sẽ thất bại trong 2015-2016 mà không có feature giá dầu
+- Khuyến mãi có thể kém hiệu quả hơn trong vụ sụp đổ (người tiêu dùng thắt chặt ngân sách bất kể giảm giá)
+- Sự khác biệt cấp cửa hàng có thể mở rộng (thành thị vs. nông thôn, sang trọng vs. giảm giá)
 
 ---
 
-## Data Quality Assessment
+## Đánh Giá Chất Lượng Dữ Liệu
 
-### Completeness: Excellent ✅
+### Tính Đầy Đủ: Xuất Sắc ✅
 
-**Missing Values Analysis:**
+**Phân Tích Giá Trị Thiếu:**
 ```
-Column          Missing Values    Percentage
-date            0                 0.0%
-dcoilwtico      43                3.5%
+Cột             Giá Trị Thiếu    Phần Trăm
+date            0                0,0%
+dcoilwtico      43               3,5%
 ```
 
-**Assessment**: Only 43 missing values, all structurally explained (non-trading days). After imputation, dataset is 100% complete.
+**Đánh Giá**: Chỉ 43 giá trị thiếu, tất cả được giải thích có cấu trúc (ngày không giao dịch). Sau khi điền, dataset 100% đầy đủ.
 
-### Consistency: High ✅
+### Tính Nhất Quán: Cao ✅
 
-**✅ Strengths:**
-- Date format consistent (YYYY-MM-DD)
-- No negative prices (min = $26.19, realistic)
-- No extreme outliers (max = $110.62 is historically plausible for WTI)
-- No duplicate dates
-
-**⚠️ Areas to Verify:**
-1. **Date alignment with train.csv**: Verify oil dataset covers all sales dates
-2. **Currency**: Assume USD (WTI standard), but confirm if local currency conversions exist
-3. **Lag effects**: Test 1-day, 7-day, 30-day lags to find optimal correlation with sales
+**✅ Điểm Mạnh:**
+- Định dạng ngày nhất quán (YYYY-MM-DD)
+- Không có giá âm (min = 26,19 USD, thực tế)
+- Không có điểm bất thường cực đoan (max = 110,62 USD là lịch sử hợp lý cho WTI)
+- Không có ngày trùng lặp
 
 ---
 
-## Business Implications
+## Hàm Ý Kinh Doanh
 
-### 1. Oil Price as Sales Driver
+### 1. Giá Dầu Như Động Lực Doanh Số
 
-**Expected Correlations**:
-- **Negative correlation** (lower oil → higher sales): Transportation costs decrease → retailers lower prices → demand increases
-- **Positive correlation** (higher oil → higher sales): In oil-exporting Ecuador, high oil prices → government revenue up → public sector wages rise → consumer spending increases
+**Tương Quan Dự Kiến**:
+- **Tương quan âm** (dầu thấp hơn → doanh số cao hơn): Chi phí vận chuyển giảm → nhà bán lẻ giảm giá → cầu tăng
+- **Tương quan dương** (dầu cao hơn → doanh số cao hơn): Ở Ecuador xuất khẩu dầu, giá dầu cao → doanh thu chính phủ tăng → tiền lương khu vực công tăng → chi tiêu tiêu dùng tăng
 
-**Which effect dominates?** Needs empirical testing, but for Ecuador, the **positive correlation** likely stronger (oil revenue > cost savings).
+**Hiệu ứng nào thống trị?** Đối với Ecuador, **tương quan dương** có thể mạnh hơn (doanh thu dầu > tiết kiệm chi phí). Tuy nhiên EDA cho thấy tương quan trực tiếp rất yếu — sử dụng `oil_lag_365` và `oil_regime` thay thế.
 
-### 2. Category-Specific Impacts
+### 2. Tác Động Đặc Thù Danh Mục
 
-**Expected Sensitivity by Product Family**:
-- **High sensitivity**: AUTOMOTIVE (fuel-related), discretionary goods (ELECTRONICS, HOME APPLIANCES)
-- **Low sensitivity**: GROCERY I, BEVERAGES (daily necessities, inelastic demand)
+**Độ Nhạy Cảm Dự Kiến Theo Nhóm Sản Phẩm**:
+- **Độ nhạy cao**: AUTOMOTIVE (liên quan nhiên liệu), hàng tùy ý (ELECTRONICS, HOME APPLIANCES)
+- **Độ nhạy thấp**: GROCERY I, BEVERAGES (nhu cầu thiết yếu hàng ngày, không co giãn)
 
-**Testing Strategy**: Segment sales by family and measure correlation with oil prices.
+### 3. ROI Khuyến Mãi Trong Cú Sốc Dầu
 
-### 3. Promotional ROI During Oil Shocks
+**Giả Thuyết**: Khuyến mãi có thể kém hiệu quả hơn trong vụ sụp đổ dầu (người tiêu dùng thắt chặt ngân sách bất kể giảm giá).
 
-**Hypothesis**: Promotions may be less effective during oil crashes (consumers tighten budgets regardless of discounts).
-
-**Test**: Compare promotion lift (sales increase per promotional item) in high-oil vs. low-oil periods.
+**Kiểm Tra**: So sánh mức tăng khuyến mãi (tăng doanh số mỗi mặt hàng khuyến mãi) trong giai đoạn dầu cao so với dầu thấp.
 
 ---
 
-## Integration & Next Steps
+## Tích Hợp & Bước Tiếp Theo
 
-### Integration with Other Datasets
+### Feature Engineering Khuyến Nghị
 
-**Join Strategy**:
+**1. Feature Trễ** (nắm bắt hiệu ứng bị trì hoãn):
 ```python
-# Merge oil price into train data
-df_train = df_train.merge(df_oil, on='date', how='left')
+df_oil['oil_lag_7'] = df_oil['dcoilwtico'].shift(7)    # trễ 1 tuần
+df_oil['oil_lag_30'] = df_oil['dcoilwtico'].shift(30)  # trễ 1 tháng
+df_oil['oil_lag_365'] = df_oil['dcoilwtico'].shift(365) # trễ 1 năm (mạnh nhất, r≈-0,30)
 ```
 
-**Expected Result**: Every sales record gets same oil price for that date (broadcast join).
-
-### Recommended Feature Engineering
-
-**1. Lag Features** (capture delayed effects):
-```python
-df_oil['oil_lag_7'] = df_oil['dcoilwtico'].shift(7)    # 1-week lag
-df_oil['oil_lag_30'] = df_oil['dcoilwtico'].shift(30)  # 1-month lag
-```
-
-**2. Rolling Averages** (smooth volatility):
+**2. Trung Bình Trượt** (làm mịn biến động):
 ```python
 df_oil['oil_ma_7'] = df_oil['dcoilwtico'].rolling(7).mean()
 df_oil['oil_ma_30'] = df_oil['dcoilwtico'].rolling(30).mean()
 ```
 
-**3. Price Change Indicators** (capture shocks):
+**3. Chỉ Số Thay Đổi Giá** (nắm bắt cú sốc):
 ```python
 df_oil['oil_pct_change'] = df_oil['dcoilwtico'].pct_change()
 df_oil['oil_volatility'] = df_oil['dcoilwtico'].rolling(30).std()
 ```
 
-**4. Regime Flags** (binary indicators):
+**4. Cờ Chế Độ** (chỉ số nhị phân):
 ```python
-df_oil['is_oil_crash'] = (df_oil['dcoilwtico'] < 40).astype(int)  # 2015-2016
+df_oil['is_oil_crash'] = (df_oil['dcoilwtico'] < 40).astype(int)  # 2015-2016 (96 ngày)
 df_oil['is_oil_boom'] = (df_oil['dcoilwtico'] > 90).astype(int)   # 2013-2014
+# oil_regime: phân loại 3 cấp (Cao/Sụp đổ/Phục hồi)
 ```
 
-### Next Steps for Validation
+### Bước Tiếp Theo Để Xác Nhận
 
-**Immediate Actions**:
+1. **Phân Tích Tương Quan**:
+   - Tổng hợp doanh số theo ngày, nối với dầu, tính tương quan
+   - Kỳ vọng: tương quan trực tiếp rất yếu; lag-365 mạnh nhất (~-0,30)
 
-1. **Correlation Analysis**:
-   ```python
-   # Aggregate sales by date, merge with oil, calculate correlation
-   daily_sales = df_train.groupby('date')['sales'].sum()
-   corr_df = daily_sales.to_frame().merge(df_oil, on='date')
-   correlation = corr_df[['sales', 'dcoilwtico']].corr()
-   ```
+2. **Tối Ưu Hóa Độ Trễ**:
+   - Kiểm tra tương quan ở độ trễ 0, 7, 14, 30, 60, 365 ngày
+   - Tìm độ trễ tối ưu nơi tương quan mạnh nhất → lag-365
 
-2. **Visual Inspection**:
-   - Plot oil prices over time (identify regime shifts)
-   - Overlay total daily sales on same chart (check for visual correlation)
-
-3. **Lag Optimization**:
-   - Test correlations at lags of 0, 7, 14, 30, 60 days
-   - Find optimal lag where correlation is strongest
-
-4. **Model Testing**:
-   - Train baseline model without oil price → get RMSE
-   - Train model with oil price (and lags) → measure RMSE improvement
-   - Expected lift: 5-15% reduction in RMSE if oil is relevant
+3. **Kiểm Tra Mô Hình**:
+   - Huấn luyện mô hình đường cơ sở không có giá dầu → lấy RMSE
+   - Huấn luyện mô hình với giá dầu (và độ trễ) → đo cải thiện RMSE
+   - Mức tăng kỳ vọng: giảm 5-15% RMSE nếu dầu có liên quan
 
 ---
 
-## Conclusion
+## Kết Luận
 
-The oil price dataset is a **high-quality, business-critical exogenous variable** for Ecuador retail forecasting. With only 3.5% missing data (easily imputed) and 4.6 years of coverage, it provides:
+Dataset giá dầu là **biến ngoại sinh quan trọng kinh doanh, chất lượng cao** cho dự báo bán lẻ Ecuador. Với chỉ 3,5% dữ liệu thiếu (dễ điền) và bao phủ 4,6 năm, nó cung cấp:
 
-1. **Macroeconomic context** missing from store-level data
-2. **Structural break detection** (2015-2016 crash)
-3. **Leading indicator potential** via lag features
+1. **Bối cảnh kinh tế vĩ mô** thiếu trong dữ liệu cấp cửa hàng
+2. **Phát hiện phá vỡ cấu trúc** (vụ sụp đổ 2015-2016)
+3. **Tiềm năng chỉ số dẫn** qua feature trễ (lag-365 là mạnh nhất)
 
-**Key Risks**:
-- Overfitting to oil price if regime shifts are rare (only one major crash in dataset)
-- Lag effects may vary by product family (need separate models)
-- Oil price alone cannot explain store-level heterogeneity (combine with store metadata)
+**Rủi Ro Chính**:
+- Overfitting vào giá dầu nếu sự thay đổi chế độ hiếm (chỉ một vụ sụp đổ lớn trong dataset)
+- Hiệu ứng trễ có thể thay đổi theo nhóm sản phẩm (cần mô hình riêng biệt)
+- Giá dầu một mình không thể giải thích sự không đồng nhất cấp cửa hàng (kết hợp với metadata cửa hàng)
 
-**Success Metrics**:
-- Target: Improve baseline RMSE by 10%+ when oil features included
-- Explain sales variance during 2015-2016 crash period
-- Identify which product families are most oil-sensitive
+**Chỉ Số Thành Công**:
+- Mục tiêu: Cải thiện RMSE đường cơ sở 10%+ khi bao gồm feature dầu
+- Giải thích phương sai doanh số trong giai đoạn sụp đổ 2015-2016
+- Xác định nhóm sản phẩm nào nhạy cảm nhất với dầu
 
-This dataset should be **immediately integrated** into all time-series models—its business relevance and data quality justify treating it as a core feature, not optional.
+Dataset này nên được **tích hợp ngay lập tức** vào tất cả mô hình chuỗi thời gian — sự liên quan kinh doanh và chất lượng dữ liệu biện minh cho việc coi nó là feature cốt lõi, không phải tùy chọn. Sử dụng `oil_lag_365` và `oil_regime` là các feature chính; tránh sử dụng giá dầu đồng thời do tương quan giả với xu hướng doanh số.

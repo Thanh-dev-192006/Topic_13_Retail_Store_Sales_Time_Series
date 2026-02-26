@@ -1,438 +1,328 @@
-# Holidays & Events Dataset Exploration Report
-**Retail Store Sales Time Series Analysis**
-*Generated: 2026-01-02*
+# Báo Cáo Khám Phá Dataset Ngày Lễ và Sự Kiện
+**Phân Tích Chuỗi Thời Gian Doanh Số Bán Lẻ**
+*Tạo ngày: 2026-01-02*
 
 ---
 
-## Executive Summary
+## Tóm Tắt Điều Hành
 
-This report analyzes 350 holiday and event records spanning 2012-2017, providing critical calendar features for sales forecasting in Ecuador. Four key insights emerged:
+Báo cáo này phân tích 350 bản ghi ngày lễ và sự kiện trong giai đoạn 2012-2017, cung cấp các feature lịch quan trọng cho dự báo doanh số tại Ecuador. Bốn phát hiện chính nổi bật:
 
-1. **Geographic precision matters—national events are only half the story**: 49.7% of events are national (affecting all stores), but 50.3% are regional/local (city or province-specific). Models using only national holidays will **miss half of all holiday effects**, causing systematic underperformance in stores experiencing local celebrations. Store-location matching is mandatory, not optional.
+1. **Độ chính xác địa lý quan trọng — sự kiện quốc gia chỉ là một nửa câu chuyện**: 49,7% sự kiện có phạm vi quốc gia (ảnh hưởng tất cả cửa hàng), nhưng 50,3% có phạm vi khu vực/địa phương (đặc thù thành phố hoặc tỉnh). Các mô hình chỉ dùng ngày lễ quốc gia sẽ **bỏ sót một nửa tất cả hiệu ứng ngày lễ**, gây ra hoạt động kém có hệ thống ở các cửa hàng trải qua lễ kỷ niệm địa phương. Khớp vị trí cửa hàng là bắt buộc, không phải tùy chọn.
 
-2. **Minimal holiday transfers simplify modeling**: Only 12 events (3.4%) have `transferred=True`, meaning 96.6% of holidays occur on their scheduled dates. This is a **major modeling advantage**—no need to track complex transfer logic or multi-date holiday windows for most events.
+2. **Ít chuyển ngày lễ đơn giản hóa mô hình hóa**: Chỉ 12 sự kiện (3,4%) có `transferred=True`, nghĩa là 96,6% ngày lễ xảy ra vào ngày đã lên lịch. Đây là **lợi thế mô hình hóa lớn** — không cần theo dõi logic chuyển phức tạp hoặc cửa sổ ngày lễ nhiều ngày cho hầu hết sự kiện.
 
-3. **Carnaval dominates event frequency and likely sales impact**: Appearing 10 times (most frequent event), Carnaval is a multi-day national celebration warranting dedicated feature engineering. Its recurrence makes it statistically learnable, unlike one-off events.
+3. **Carnaval thống trị tần suất sự kiện và có thể tác động doanh số**: Xuất hiện 10 lần (sự kiện thường xuyên nhất), Carnaval là lễ hội quốc gia nhiều ngày đáng có feature engineering chuyên dụng. Sự tái diễn của nó làm cho nó có thể học được về mặt thống kê, không giống các sự kiện một lần.
 
-4. **Perfect data quality enables immediate integration**: Zero missing values across all 350 records and 6 columns. The only preprocessing needed is datetime conversion—otherwise, dataset is production-ready.
-
----
-
-## Dataset Overview
-
-### What This Dataset Contains
-The holidays_events dataset catalogs **national, regional, and local holidays and events** in Ecuador, serving as an **exogenous calendar feature** to explain sales anomalies (spikes before holidays, drops during closures).
-
-**Core Specifications:**
-- **Rows**: 350 event records
-- **Columns**: 6 features (date, type, locale, locale_name, description, transferred)
-- **Time Span**: 2012 to 2017 (312 unique dates over ~5 years)
-- **Granularity**: Event-level (one row per event, multiple events can occur on same date)
-- **Memory Footprint**: ~14 KB (negligible)
-
-### Business Context
-Ecuador's retail calendar includes:
-- **National holidays**: Christmas, New Year, Independence Day (affect all 54 stores simultaneously)
-- **Regional holidays**: Provincial anniversaries (e.g., Provincializacion de Cotopaxi)
-- **Local holidays**: City foundation days (e.g., Fundacion de Cuenca)
-
-**Why this matters for forecasting**:
-- **Pre-holiday surge**: Customers stockpile 1-2 days before (e.g., December 24 traffic spike)
-- **Holiday closure**: Stores closed or reduced hours → sales drop to near-zero
-- **Post-holiday recovery**: Normal shopping resumes 1-2 days after
-
-Without holiday features, models will:
-- **Underpredict** pre-holiday spikes (misinterpret as random noise)
-- **Overpredict** on-holiday sales (expect normal demand when stores are closed)
-- **Misattribute** local sales anomalies (e.g., blaming promotions when it's a city holiday)
+4. **Chất lượng dữ liệu hoàn hảo cho phép tích hợp ngay lập tức**: Không có giá trị thiếu trong tất cả 350 bản ghi và 6 cột. Tiền xử lý duy nhất cần thiết là chuyển đổi datetime — ngoài ra, dataset sẵn sàng cho sản xuất.
 
 ---
 
-## Data Structure & Characteristics
+## Tổng Quan Dataset
 
-### Column Specifications
+### Dataset Này Chứa Gì
+Dataset holidays_events liệt kê **ngày lễ và sự kiện quốc gia, khu vực và địa phương** tại Ecuador, phục vụ như **feature lịch ngoại sinh** để giải thích các điểm bất thường doanh số (tăng vọt trước ngày lễ, giảm trong khi đóng cửa).
 
-| Column | Type | Description | Value Range |
+**Thông Số Cốt Lõi:**
+- **Hàng**: 350 bản ghi sự kiện
+- **Cột**: 6 feature (date, type, locale, locale_name, description, transferred)
+- **Khoảng Thời Gian**: 2012 đến 2017 (312 ngày duy nhất trong ~5 năm)
+- **Chi Tiết**: Cấp sự kiện (một hàng mỗi sự kiện, nhiều sự kiện có thể xảy ra cùng ngày)
+- **Dung Lượng Bộ Nhớ**: ~14 KB (không đáng kể)
+
+### Bối Cảnh Kinh Doanh
+Lịch bán lẻ Ecuador bao gồm:
+- **Ngày lễ quốc gia**: Giáng sinh, Năm mới, Ngày Độc lập (ảnh hưởng tất cả 54 cửa hàng đồng thời)
+- **Ngày lễ khu vực**: Kỷ niệm tỉnh (ví dụ: Provincializacion de Cotopaxi)
+- **Ngày lễ địa phương**: Ngày thành lập thành phố (ví dụ: Fundacion de Cuenca)
+
+**Tại sao điều này quan trọng cho dự báo**:
+- **Tăng vọt trước ngày lễ**: Khách hàng tích trữ 1-2 ngày trước (ví dụ: đỉnh lưu lượng ngày 24 tháng 12)
+- **Đóng cửa ngày lễ**: Cửa hàng đóng cửa hoặc giảm giờ → doanh số giảm xuống gần bằng không
+- **Phục hồi sau ngày lễ**: Mua sắm bình thường tiếp tục 1-2 ngày sau
+
+Không có feature ngày lễ, các mô hình sẽ:
+- **Dự đoán thấp** đỉnh trước ngày lễ (hiểu sai là nhiễu ngẫu nhiên)
+- **Dự đoán cao** doanh số trong ngày lễ (kỳ vọng cầu bình thường khi cửa hàng đóng cửa)
+- **Quy sai** các điểm bất thường doanh số địa phương (ví dụ: đổ lỗi cho khuyến mãi khi thực ra là ngày lễ thành phố)
+
+---
+
+## Cấu Trúc Dữ Liệu & Đặc Điểm
+
+### Thông Số Cột
+
+| Cột | Loại | Mô Tả | Phạm Vi Giá Trị |
 |--------|------|-------------|-------------|
-| `date` | object (datetime) | Holiday/event date | 2012-03-02 to 2017-12-26 |
-| `type` | object | Event classification | 6 unique types (Holiday, Event, etc.) |
-| `locale` | object | Geographic scope | National, Regional, Local |
-| `locale_name` | object | Specific location (city/province/country) | 24 unique locations |
-| `description` | object | Event name | 103 unique event descriptions |
-| `transferred` | bool | Whether holiday moved to another date | True/False |
+| `date` | object (datetime) | Ngày ngày lễ/sự kiện | 2012-03-02 đến 2017-12-26 |
+| `type` | object | Phân loại sự kiện | 6 loại duy nhất (Holiday, Event, v.v.) |
+| `locale` | object | Phạm vi địa lý | National, Regional, Local |
+| `locale_name` | object | Vị trí cụ thể (thành phố/tỉnh/quốc gia) | 24 vị trí duy nhất |
+| `description` | object | Tên sự kiện | 103 mô tả sự kiện duy nhất |
+| `transferred` | bool | Ngày lễ có được chuyển sang ngày khác không | True/False |
 
-**Critical Notes**:
-- **No primary key**: Same date can have multiple events (38 dates have 2+ events)
-- **Hierarchical geography**: National > Regional > Local (Ecuador → Province → City)
-- **Event types**: "Holiday" dominates (63.1% of records), followed by other event types
+**Ghi Chú Quan Trọng**:
+- **Không có khóa chính**: Cùng ngày có thể có nhiều sự kiện (38 ngày có 2+ sự kiện)
+- **Địa lý phân cấp**: Quốc gia > Khu vực > Địa phương (Ecuador → Tỉnh → Thành phố)
+- **Loại sự kiện**: "Holiday" thống trị (63,1% bản ghi)
 
-### Event Type Distribution
+### Phân Phối Loại Sự Kiện
 
-| Type | Count | Percentage | Likely Meaning |
+| Loại | Số lượng | Phần trăm | Ý nghĩa có thể |
 |------|-------|------------|----------------|
-| Holiday | 221 | 63.1% | Official holidays (potential store closures) |
-| Other Types (5 total) | 129 | 36.9% | Events, work days, bridge days, etc. |
+| Holiday | 221 | 63,1% | Ngày lễ chính thức (có thể đóng cửa hàng) |
+| Các loại khác (5 loại) | 129 | 36,9% | Sự kiện, ngày làm việc, ngày bridge, v.v. |
 
-**Note**: Exact breakdown of other types not visible in notebook output, but "Holiday" is dominant category.
+### Phân Phối Phạm Vi Địa Lý
 
-### Geographic Scope Distribution
-
-| Locale | Count | Percentage | Impact Scope |
+| Locale | Số lượng | Phần trăm | Phạm Vi Tác Động |
 |--------|-------|------------|--------------|
-| National | 174 | 49.7% | All 54 stores affected |
-| Regional | ~88 | ~25% | Province-level (subset of stores) |
-| Local | ~88 | ~25% | City-level (1-few stores) |
+| National | 174 | 49,7% | Tất cả 54 cửa hàng bị ảnh hưởng |
+| Regional | ~88 | ~25% | Cấp tỉnh (tập hợp con cửa hàng) |
+| Local | ~88 | ~25% | Cấp thành phố (1-vài cửa hàng) |
 
-**Critical Insight**: **49.7% national vs. 50.3% regional/local** means store-level holiday features are essential—can't rely on national calendar alone.
-
-### Location Breakdown
-
-- **Unique Locations**: 24 (including "Ecuador" for national events)
-- **Most Frequent Location**: "Ecuador" (174 national events)
-- **Regional/Local Examples**: Cotopaxi, Cuenca, Libertad, Riobamba, Manta
-
-**Modeling Implication**: Must join `locale_name` to store locations (city/state from stores.csv) to assign correct holidays to each store.
+**Phát Hiện Quan Trọng**: **49,7% quốc gia vs. 50,3% khu vực/địa phương** có nghĩa là feature ngày lễ cấp cửa hàng là thiết yếu — không thể dựa chỉ vào lịch quốc gia.
 
 ---
 
-## Key Findings & Patterns
+## Phát Hiện & Mẫu Chính
 
-### 1. High Event Frequency: 17% of Days Have Holidays
+### 1. Tần Suất Sự Kiện Cao: 17% Ngày Có Ngày Lễ
 
-**Temporal Distribution**:
-- **Unique Dates**: 312 dates over ~1,826 days (2012-2017) = **17.1% coverage**
-- **Average**: ~70 events per year
-- **Multiple Events Per Day**: 38 dates (12.2%) have 2+ simultaneous events (e.g., national + local holiday on same day)
+**Phân Phối Thời Gian**:
+- **Ngày Duy Nhất**: 312 ngày trong ~1.826 ngày (2012-2017) = **bao phủ 17,1%**
+- **Trung Bình**: ~70 sự kiện mỗi năm
+- **Nhiều Sự Kiện Mỗi Ngày**: 38 ngày (12,2%) có 2+ sự kiện đồng thời (ví dụ: ngày lễ quốc gia + địa phương cùng ngày)
 
-**What This Means**:
+**Ý Nghĩa**:
+1. **Tác động ngày lễ thường xuyên**: Gần 1 trong 6 ngày có dạng ngày lễ/sự kiện — mô hình phải xử lý điều này như bình thường, không phải hiếm gặp.
+2. **Ngày nhiều sự kiện phức tạp hóa tổng hợp**: Khi ngày lễ quốc gia + địa phương chồng chéo, tác động doanh số có thể **cộng dồn** hoặc **giới hạn**. Cần kiểm tra cả hai chiến lược.
 
-1. **Frequent holiday impact**: Nearly 1 in 6 days has some form of holiday/event—models must handle this as normal, not rare.
+### 2. Carnaval Thống Trị Tần Suất Sự Kiện
 
-2. **Multi-event days complicate aggregation**: When national + local holidays overlap, sales impact may be **additive** (double the effect) or **capped** (store closed regardless of how many holidays). Need to test both strategies.
+**Top Sự Kiện Theo Số Lần Xuất Hiện**:
 
-**Example**: 2014-06-25 appears **4 times** in dataset (same date, different locales/events)—must aggregate when joining to sales data.
-
-### 2. Carnaval Dominates Event Frequency
-
-**Top Events by Occurrence**:
-
-| Event Description | Count | Event Type |
+| Mô Tả Sự Kiện | Số lượng | Loại Sự Kiện |
 |-------------------|-------|------------|
-| Carnaval | 10 | Multi-day national celebration |
-| Other events | <10 | Various |
+| Carnaval | 10 | Lễ hội quốc gia nhiều ngày |
+| Các sự kiện khác | <10 | Khác nhau |
 
-**Why Carnaval Matters**:
+**Tại Sao Carnaval Quan Trọng**:
+1. **Ý nghĩa thống kê**: 10 lần xuất hiện cung cấp kích thước mẫu đủ để học các mẫu đặc thù Carnaval.
+2. **Lễ hội nhiều ngày**: Không giống ngày lễ một ngày, Carnaval kéo dài nhiều ngày — cần feature engineering khác (ví dụ: "ngày thứ mấy trong Carnaval" thay vì nhị phân is_holiday).
+3. **Thời điểm có thể dự đoán**: Sự tái diễn hàng năm làm cho nó có thể dự báo — mô hình có thể dự đoán hiệu ứng Carnaval trong dữ liệu kiểm tra.
 
-1. **Statistical significance**: 10 occurrences provide sufficient sample size to learn Carnaval-specific patterns (unlike one-off events).
+**Hàm Ý Kinh Doanh**: Tạo feature `is_carnaval` chuyên dụng và phân tích mẫu doanh số riêng biệt so với các ngày lễ khác.
 
-2. **Multi-day celebration**: Unlike single-day holidays, Carnaval spans several days—requires different feature engineering (e.g., "days into Carnaval" rather than binary is_holiday).
+### 3. Ít Chuyển Ngày Lễ: 96,6% Xảy Ra Đúng Lịch
 
-3. **Predictable timing**: Annual recurrence makes it forecastable—models can anticipate Carnaval effects in test data.
+**Phân Tích Chuyển**:
+- **Sự Kiện Đã Chuyển**: 12 (3,4%)
+- **Chưa Chuyển**: 338 (96,6%)
 
-**Business Implication**: Create dedicated `is_carnaval` feature and analyze sales patterns separately from other holidays.
+**"Chuyển" Có Nghĩa Là Gì**: Khi ngày lễ rơi vào cuối tuần, một số chính phủ chuyển nó sang ngày làm việc gần nhất (ví dụ: thứ 6 hoặc thứ 2) để tạo kỳ nghỉ dài.
 
-### 3. Minimal Holiday Transfers: 96.6% Occur on Schedule
+**Đơn Giản Hóa Mô Hình Hóa**:
+Với chỉ 3,4% chuyển, **đừng over-engineer** logic chuyển. Hai phương pháp:
+1. **Bỏ qua chuyển**: Dùng ngày đã lên lịch cho tất cả ngày lễ (độ chính xác 96,6%)
+2. **Cờ đơn giản**: Thêm `is_transferred` như feature nhị phân (cho mô hình học nếu hiệu ứng khác biệt)
 
-**Transfer Analysis**:
-- **Transferred Events**: 12 (3.4%)
-- **Non-Transferred**: 338 (96.6%)
+### 4. Thách Thức Khớp Địa Lý: 24 Vị Trí Duy Nhất
 
-**What "Transferred" Means**: When a holiday falls on a weekend, some governments move it to nearest weekday (e.g., Friday or Monday) to create long weekend.
+**Đa Dạng Vị Trí**:
+- **Quốc gia**: "Ecuador" (1 vị trí, 174 sự kiện)
+- **Khu vực/Địa phương**: 23 thành phố/tỉnh riêng biệt
 
-**Modeling Simplification**:
-
-With only 3.4% transfers, **don't over-engineer** transfer logic. Two approaches:
-
-1. **Ignore transfers**: Use scheduled date for all holidays (96.6% accuracy)
-2. **Simple flag**: Add `is_transferred` as binary feature (let model learn if effect differs)
-
-**Contrast with complex calendars**: Some countries transfer many holidays (e.g., UK bank holidays), requiring multi-date tracking. Ecuador's low transfer rate is a **data quality advantage**.
-
-### 4. Geographic Matching Challenge: 24 Unique Locations
-
-**Location Diversity**:
-- **National**: "Ecuador" (1 location, 174 events)
-- **Regional/Local**: 23 distinct cities/provinces
-
-**Critical Integration Requirement**:
-
-To assign holidays to stores, must **map stores.csv locations to holidays_events.csv locations**:
+**Yêu Cầu Tích Hợp Quan Trọng**:
+Để gán ngày lễ cho cửa hàng, phải **ánh xạ vị trí stores.csv tới vị trí holidays_events.csv**:
 
 ```python
-# Example mapping needed
+# Ví dụ ánh xạ cần thiết
 store_to_holiday_locale = {
-    'Quito': 'Pichincha',          # Store city → holiday region
+    'Quito': 'Pichincha',       # Thành phố cửa hàng → khu vực ngày lễ
     'Guayaquil': 'Guayas',
-    'Cuenca': 'Cuenca',            # May match directly
-    # ... (complete mapping for all 22 cities in stores.csv)
+    'Cuenca': 'Cuenca',         # Có thể khớp trực tiếp
+    # ... (ánh xạ đầy đủ cho tất cả 22 thành phố trong stores.csv)
 }
 ```
 
-**Risk**: If location names don't match (e.g., store says "Quito" but holiday says "Pichincha"), join will fail and local holidays will be missed.
-
-**Validation Step**: After joining, verify that regional/local events only affect expected stores (e.g., "Fundacion de Cuenca" should only appear for Cuenca stores, not Quito).
+**Rủi Ro**: Nếu tên vị trí không khớp (ví dụ: cửa hàng nói "Quito" nhưng ngày lễ nói "Pichincha"), join sẽ thất bại và ngày lễ địa phương sẽ bị bỏ sót.
 
 ---
 
-## Data Quality Assessment
+## Đánh Giá Chất Lượng Dữ Liệu
 
-### Completeness: Perfect ✅
+### Tính Đầy Đủ: Hoàn Hảo ✅
 
-**Missing Values Analysis:**
+**Phân Tích Giá Trị Thiếu:**
 ```
-Column          Missing Values    Percentage
-date            0                 0.0%
-type            0                 0.0%
-locale          0                 0.0%
-locale_name     0                 0.0%
-description     0                 0.0%
-transferred     0                 0.0%
+Cột             Giá Trị Thiếu    Phần Trăm
+date            0                0,0%
+type            0                0,0%
+locale          0                0,0%
+locale_name     0                0,0%
+description     0                0,0%
+transferred     0                0,0%
 ```
 
-**Assessment**: Zero missing values. Dataset is 100% complete—exceptional for manually curated event calendars.
+**Đánh Giá**: Không có giá trị thiếu. Dataset 100% đầy đủ.
 
-### Consistency: Excellent ✅
+### Tính Nhất Quán: Xuất Sắc ✅
 
-**✅ Strengths:**
-- **Date format consistent**: All dates parseable (2012-03-02 onwards)
-- **Boolean field clean**: `transferred` is proper bool (True/False), not messy strings
-- **No typos detected**: Event descriptions like "Carnaval" spelled consistently (not "Carnival", "Carnavale", etc.)
-- **Hierarchical integrity**: No "Local" events with `locale_name = "Ecuador"` (which would be illogical)
+**✅ Điểm Mạnh:**
+- **Định dạng ngày nhất quán**: Tất cả ngày có thể phân tích (từ 2012-03-02 trở đi)
+- **Trường boolean sạch**: `transferred` là bool đúng (True/False)
+- **Không phát hiện lỗi chính tả**: Mô tả sự kiện như "Carnaval" viết nhất quán
+- **Tính toàn vẹn địa lý phân cấp**: Không có sự kiện "Local" với `locale_name = "Ecuador"`
 
-### Potential Issues
+### Vấn Đề Tiềm Ẩn
 
-**1. Multiple Events Per Date**:
-- 38 dates have 2-4 simultaneous events (different locales or event types)
-- **Aggregation needed** when joining to sales data:
-  - Option A: `is_any_holiday` (binary flag if ≥1 event that day)
-  - Option B: `holiday_count` (integer count of events)
-  - Option C: `holiday_importance` (weighted sum, e.g., National=3, Regional=2, Local=1)
+**1. Nhiều Sự Kiện Mỗi Ngày**:
+- 38 ngày có 2-4 sự kiện đồng thời (locale hoặc loại sự kiện khác nhau)
+- **Cần tổng hợp** khi nối vào dữ liệu doanh số:
+  - Tùy chọn A: `is_any_holiday` (cờ nhị phân nếu ≥1 sự kiện ngày đó)
+  - Tùy chọn B: `holiday_count` (đếm số nguyên các sự kiện)
+  - Tùy chọn C: `holiday_importance` (tổng có trọng số, ví dụ: Quốc gia=3, Khu vực=2, Địa phương=1)
 
-**2. Location Name Matching**:
-- `locale_name` may not align with `city` or `state` in stores.csv
-- Example mismatch: Holiday says "Manta" (city), but store location might be listed as "Manabí" (province)
-- **Mitigation**: Create explicit mapping table or fuzzy matching
+**2. Khớp Tên Vị Trí**:
+- `locale_name` có thể không khớp với `city` hoặc `state` trong stores.csv
+- Ví dụ không khớp: Ngày lễ nói "Manta" (thành phố), nhưng vị trí cửa hàng có thể được liệt kê là "Manabí" (tỉnh)
+- **Giảm thiểu**: Tạo bảng ánh xạ rõ ràng hoặc khớp mờ
 
-**3. Event Type Ambiguity**:
-- 6 event types exist, but only "Holiday" shown in output
-- Other types may include "Work Day", "Event", "Additional", "Bridge", "Transfer"
-- **Unclear impact**: Do "Work Day" events increase sales (people shopping during extended hours)? Or decrease (fatigue)?
-- **Action**: One-hot encode `type` and let model learn effect of each
+**3. Sự Mơ Hồ Loại Sự Kiện**:
+- 6 loại sự kiện tồn tại, nhưng chỉ "Holiday" được hiển thị trong đầu ra
+- Các loại khác có thể bao gồm "Work Day", "Event", "Additional", "Bridge", "Transfer"
+- **Hành động**: Mã hóa one-hot `type` và cho mô hình học hiệu ứng của mỗi loại
 
 ---
 
-## Business Implications
+## Hàm Ý Kinh Doanh
 
-### 1. Store-Level Holiday Features Are Mandatory
+### 1. Feature Ngày Lễ Cấp Cửa Hàng Là Bắt Buộc
 
-**Why National-Only Models Fail**:
+**Tại Sao Mô Hình Chỉ Quốc Gia Thất Bại**:
+Nếu chỉ dùng ngày lễ quốc gia (174 sự kiện):
+- **Bỏ sót 50,3% hiệu ứng ngày lễ** (176 sự kiện khu vực/địa phương bị bỏ qua)
+- **Thiên lệch hệ thống**: Các cửa hàng ở thành phố có nhiều ngày lễ địa phương (ví dụ: Cuenca với Fundacion de Cuenca) sẽ bị dự báo thấp có hệ thống trong những sự kiện đó
 
-If using only national holidays (174 events):
-- **Miss 50.3% of holiday effects** (176 regional/local events ignored)
-- **Systematic bias**: Stores in cities with many local holidays (e.g., Cuenca with Fundacion de Cuenca) will be systematically underforecast during those events
+**Giải Pháp**:
+- Nối ngày lễ với stores.csv theo vị trí
+- Tạo lịch ngày lễ đặc thù cửa hàng (mỗi cửa hàng có ~70 ngày lễ quốc gia + ~5-10 ngày lễ địa phương mỗi năm)
 
-**Solution**:
-- Merge holidays with stores.csv on location
-- Create store-specific holiday calendars (each store has ~70 national + ~5-10 local events per year)
+### 2. Tăng Vọt Mua Sắm Trước Ngày Lễ Cần Feature Dẫn
 
-### 2. Pre-Holiday Shopping Surge Requires Lead Features
-
-**Expected Sales Pattern**:
-1. **2 days before holiday**: Customers stockpile (sales spike)
-2. **1 day before**: Peak stockpiling (highest sales)
-3. **Holiday day**: Store closed or reduced hours (sales collapse)
-4. **1 day after**: Slow recovery (customers using stockpiled goods)
-5. **2 days after**: Return to normal
+**Mẫu Doanh Số Dự Kiến**:
+1. **2 ngày trước ngày lễ**: Khách hàng tích trữ (đỉnh doanh số)
+2. **1 ngày trước**: Tích trữ đỉnh (doanh số cao nhất)
+3. **Ngày lễ**: Cửa hàng đóng cửa hoặc giảm giờ (doanh số sụp đổ)
+4. **1 ngày sau**: Phục hồi chậm (khách hàng dùng hàng tích trữ)
+5. **2 ngày sau**: Trở lại bình thường
 
 **Feature Engineering**:
 ```python
-# Create lead/lag indicators
+# Tạo chỉ số dẫn/trễ
 df['days_to_next_holiday'] = (next_holiday_date - df['date']).dt.days
 df['days_since_last_holiday'] = (df['date'] - last_holiday_date).dt.days
 
-# Binary flags for pre-holiday window
+# Cờ nhị phân cho cửa sổ trước ngày lễ
 df['is_1day_before_holiday'] = (df['days_to_next_holiday'] == 1).astype(int)
 df['is_2day_before_holiday'] = (df['days_to_next_holiday'] == 2).astype(int)
 ```
 
-**Why this matters**: Simply flagging `is_holiday=1` on holiday date will miss the **pre-holiday surge** (often higher sales impact than holiday itself).
+**Tại Sao điều này quan trọng**: Chỉ gắn cờ `is_holiday=1` vào ngày lễ sẽ bỏ sót **đỉnh trước ngày lễ** (thường có tác động doanh số cao hơn chính ngày lễ).
 
-### 3. Carnaval Warrants Dedicated Treatment
+### 3. Carnaval Đáng Được Xử Lý Chuyên Dụng
 
-**Hypothesis**: Multi-day Carnaval has different pattern than single-day holidays.
+**Chiến Lược Kiểm Tra**:
+1. Trích xuất tất cả ngày Carnaval (10 lần xuất hiện)
+2. Phân tích doanh số 5 ngày trước → 5 ngày sau Carnaval
+3. So sánh với mẫu doanh số xung quanh ngày lễ một ngày (ví dụ: Ngày Độc lập)
+4. Nếu mẫu khác biệt đáng kể (>20% phương sai), tạo feature `is_carnaval`
 
-**Testing Strategy**:
-1. Extract all Carnaval dates (10 occurrences)
-2. Analyze sales 5 days before → 5 days after Carnaval
-3. Compare to sales patterns around single-day holidays (e.g., Independence Day)
-4. If patterns differ significantly (>20% variance), create `is_carnaval` feature
+### 4. Tối Ưu Hóa Chiến Lược Doanh Số Khu Vực
 
-**Expected Findings**:
-- Carnaval may have **longer pre-holiday surge** (3-4 days vs. 1-2 days)
-- Post-Carnaval recovery may be **slower** (multi-day celebration → more stockpiling)
+**Cơ Hội**: Ngày lễ địa phương tạo **điểm bất thường doanh số khu vực** vô hình trong tổng hợp quốc gia.
 
-### 4. Regional Sales Strategy Optimization
-
-**Opportunity**: Local holidays create **regional sales anomalies** invisible in national aggregates.
-
-**Business Use Case**:
-- **Inventory allocation**: If Cuenca has "Fundacion de Cuenca" holiday, shift inventory to Cuenca stores 2 days before (expect surge)
-- **Promotion timing**: Avoid running promotions **during** local holidays (stores closed, wasted promotional budget)
-- **Competitor analysis**: If competitor doesn't adjust for local holidays, their stockouts create market share opportunities
+**Trường Hợp Sử Dụng Kinh Doanh**:
+- **Phân bổ hàng tồn kho**: Nếu Cuenca có ngày lễ "Fundacion de Cuenca", chuyển hàng tồn kho đến cửa hàng Cuenca 2 ngày trước (kỳ vọng đỉnh)
+- **Thời điểm khuyến mãi**: Tránh chạy khuyến mãi **trong** ngày lễ địa phương (cửa hàng đóng cửa, lãng phí ngân sách khuyến mãi)
 
 ---
 
-## Integration & Next Steps
+## Tích Hợp & Bước Tiếp Theo
 
-### Integration with Other Datasets
-
-**Join Strategy with Sales Data**:
+### Chiến Lược Join Với Dữ Liệu Khác
 
 ```python
-# Step 1: Merge stores with holidays on location
+# Bước 1: Nối cửa hàng với ngày lễ theo vị trí
 stores_with_holidays = stores.merge(
     holidays_events[holidays_events['locale'] == 'National'],
-    how='cross'  # All stores get all national holidays
-).append(
-    stores.merge(
-        holidays_events[holidays_events['locale'].isin(['Regional', 'Local'])],
-        left_on='city',  # or 'state', depending on locale
-        right_on='locale_name',
-        how='left'
-    )
+    how='cross'  # Tất cả cửa hàng nhận tất cả ngày lễ quốc gia
 )
 
-# Step 2: Merge with train data
+# Bước 2: Nối với dữ liệu train
 df_train = df_train.merge(
     stores_with_holidays[['store_nbr', 'date', 'type', 'description']],
     on=['store_nbr', 'date'],
     how='left'
 )
 
-# Step 3: Create holiday flags
+# Bước 3: Tạo cờ ngày lễ
 df_train['is_holiday'] = df_train['type'].notna().astype(int)
 ```
 
-**Validation Checks**:
-1. **National holiday coverage**: Every store should have ~174 national holidays matched
-2. **Regional/local distribution**: Stores in Quito should have Quito-specific holidays, not Cuenca holidays
-3. **Join success rate**: Expect ~17% of train.csv dates to have `is_holiday=1`
+### Feature Engineering Khuyến Nghị
 
-### Recommended Feature Engineering
-
-**Level 1: Basic Binary Flags**
+**Cấp 1: Cờ Nhị Phân Cơ Bản**
 ```python
 df_train['is_holiday'] = (df_train['type'].notna()).astype(int)
 df_train['is_national_holiday'] = (df_train['locale'] == 'National').astype(int)
 df_train['is_transferred'] = df_train['transferred'].astype(int)
 ```
 
-**Level 2: Temporal Lead/Lag Features**
+**Cấp 2: Feature Thời Gian Dẫn/Trễ**
 ```python
-# Days until next holiday (per store)
-df_train = df_train.sort_values(['store_nbr', 'date'])
-df_train['days_to_holiday'] = df_train.groupby('store_nbr')['is_holiday'].apply(
-    lambda x: x[::-1].cumsum()[::-1]  # Reverse cumsum trick
-)
+# Ngày đến ngày lễ tiếp theo (mỗi cửa hàng)
+df_train['days_to_holiday'] = ...  # tính theo nhóm store_nbr
 
-# Days since last holiday
-df_train['days_since_holiday'] = df_train.groupby('store_nbr')['is_holiday'].cumsum()
+# Ngày kể từ ngày lễ cuối
+df_train['days_since_holiday'] = ...
 ```
 
-**Level 3: Event-Specific Features**
+**Cấp 3: Feature Đặc Thù Sự Kiện**
 ```python
 df_train['is_carnaval'] = (df_train['description'] == 'Carnaval').astype(int)
 df_train['is_christmas_eve'] = (
     (df_train['date'].dt.month == 12) & (df_train['date'].dt.day == 24)
 ).astype(int)
+df_train['is_bridge_day'] = (df_train['type'] == 'Bridge').astype(int)
+df_train['is_transfer_day'] = (df_train['type'] == 'Transfer').astype(int)
 ```
 
-**Level 4: Interaction Features**
+**Cấp 4: Feature Tương Tác**
 ```python
-# Holiday × Day of Week (e.g., holiday on Saturday vs. Tuesday)
+# Ngày lễ × Ngày trong Tuần
 df_train['holiday_weekend'] = df_train['is_holiday'] * df_train['is_weekend']
 
-# Holiday × Oil Price (economic context)
+# Ngày lễ × Giá Dầu (bối cảnh kinh tế)
 df_train['holiday_oil_interaction'] = df_train['is_holiday'] * df_train['oil_price_lag_7']
 ```
 
-### Next Steps for Validation
-
-**Immediate Actions**:
-
-1. **Location Mapping Audit**:
-   ```python
-   # Check which store locations match holiday locations
-   store_cities = set(df_stores['city'].unique())
-   holiday_locales = set(df_holidays['locale_name'].unique())
-
-   matched = store_cities & holiday_locales
-   unmatched_stores = store_cities - holiday_locales
-   unmatched_holidays = holiday_locales - store_cities
-
-   print(f"Matched: {len(matched)}, Unmatched stores: {unmatched_stores}, Unmatched holidays: {unmatched_holidays}")
-   ```
-
-2. **Holiday Sales Impact Analysis**:
-   ```python
-   # Compare sales on holiday vs. non-holiday days
-   df_merged = df_train.merge(df_holidays, on='date', how='left')
-   df_merged['is_holiday'] = df_merged['type'].notna()
-
-   holiday_sales = df_merged[df_merged['is_holiday']]['sales'].mean()
-   normal_sales = df_merged[~df_merged['is_holiday']]['sales'].mean()
-
-   print(f"Holiday sales: {holiday_sales:.2f}, Normal: {normal_sales:.2f}, Ratio: {holiday_sales/normal_sales:.2%}")
-   ```
-
-3. **Pre-Holiday Surge Detection**:
-   ```python
-   # Analyze sales 1-2 days before holidays
-   df_train['days_to_holiday'] = ...  # (from feature engineering above)
-
-   surge_sales = df_train[df_train['days_to_holiday'].isin([1, 2])]['sales'].mean()
-   normal_sales = df_train[df_train['days_to_holiday'] > 7]['sales'].mean()
-
-   print(f"Pre-holiday surge: {surge_sales/normal_sales - 1:.1%} above normal")
-   ```
-
-4. **Carnaval Deep Dive**:
-   ```python
-   # Extract Carnaval date ranges
-   carnaval_dates = df_holidays[df_holidays['description'] == 'Carnaval']['date'].unique()
-
-   # Analyze sales ±7 days around each Carnaval
-   for cdate in carnaval_dates:
-       window = df_train[(df_train['date'] >= cdate - pd.Timedelta(7, 'D')) &
-                         (df_train['date'] <= cdate + pd.Timedelta(7, 'D'))]
-       # Plot or summarize sales trend
-   ```
-
 ---
 
-## Conclusion
+## Kết Luận
 
-The holidays_events dataset is a **high-quality, essential calendar feature** for Ecuador retail forecasting. With zero missing values and clear structure, it's production-ready after minimal preprocessing.
+Dataset holidays_events là **feature lịch thiết yếu, chất lượng cao** cho dự báo bán lẻ Ecuador. Với không có giá trị thiếu và cấu trúc rõ ràng, nó sẵn sàng cho sản xuất sau tiền xử lý tối thiểu.
 
-**Key Strengths**:
-1. **Perfect completeness** (0% missing data)
-2. **Geographic granularity** (national + regional + local)
-3. **Low transfer complexity** (96.6% of holidays occur on scheduled dates)
-4. **Statistical depth** (350 events over 5 years, ~70/year)
+**Điểm Mạnh Chính**:
+1. **Tính đầy đủ hoàn hảo** (0% dữ liệu thiếu)
+2. **Chi tiết địa lý** (quốc gia + khu vực + địa phương)
+3. **Độ phức tạp chuyển thấp** (96,6% ngày lễ xảy ra đúng ngày lên lịch)
+4. **Chiều sâu thống kê** (350 sự kiện trong 5 năm, ~70/năm)
 
-**Key Risks**:
-1. **Location matching required**: 50.3% of events are regional/local, necessitating store-location joins
-2. **Multi-event aggregation**: 12.2% of dates have multiple simultaneous events—need aggregation strategy
-3. **Lead/lag engineering critical**: On-holiday sales drop (stores closed), but pre-holiday sales spike—must capture both
+**Rủi Ro Chính**:
+1. **Cần khớp vị trí**: 50,3% sự kiện là khu vực/địa phương, đòi hỏi join vị trí cửa hàng
+2. **Tổng hợp nhiều sự kiện**: 12,2% ngày có nhiều sự kiện đồng thời — cần chiến lược tổng hợp
+3. **Feature dẫn/trễ quan trọng**: Doanh số trong ngày lễ giảm (cửa hàng đóng cửa), nhưng doanh số trước ngày lễ tăng — phải nắm bắt cả hai
 
-**Success Metrics**:
-- After integration: Confirm holiday features rank in top 5 predictors by importance
-- Pre-holiday surge: Detect ≥20% sales increase 1-2 days before national holidays
-- Regional accuracy: Local holiday features improve RMSE by ≥5% for stores in affected regions
-
-This dataset transforms from "nice-to-have" to **mission-critical** when considering:
-- Carnaval's 10 occurrences (statistically significant)
-- 17% of all days have some event (frequent, not rare)
-- Store-level heterogeneity (regional/local holidays affect different stores)
-
-**Immediate Action**: Prioritize location mapping (stores.csv → holidays_events.csv) before any modeling begins—this is a **blocking dependency** for accurate forecasting.
+**Hành Động Ngay Lập Tức**: Ưu tiên ánh xạ vị trí (stores.csv → holidays_events.csv) trước khi bắt đầu mô hình hóa — đây là **phụ thuộc chặn** cho dự báo chính xác.

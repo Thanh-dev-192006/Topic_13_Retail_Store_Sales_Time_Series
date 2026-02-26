@@ -1,342 +1,342 @@
-# Transaction Count Dataset Exploration Report
-**Retail Store Sales Time Series Analysis**
-*Generated: 2026-01-02*
+# Báo Cáo Khám Phá Tập Dữ Liệu Giao Dịch
+**Phân Tích Chuỗi Thời Gian Doanh Số Bán Lẻ**
+*Tạo ngày: 2026-01-02*
 
 ---
 
-## Executive Summary
+## Tóm Tắt Điều Hành
 
-This report analyzes 83,488 daily transaction count records across 54 stores, serving as a **foot traffic indicator** for retail forecasting. Four critical insights emerged:
+Báo cáo này phân tích 83.488 bản ghi số lượng giao dịch hàng ngày trên 54 cửa hàng, đóng vai trò là **chỉ số lưu lượng khách** cho dự báo bán lẻ. Bốn phát hiện quan trọng nổi lên:
 
-1. **Significant data sparsity reflects store operations**: 8.4% of expected store-day records are missing from raw data (7,664 out of 91,152 expected records). However, this is **not random**—missing data concentrates in newly opened stores (store 52 missing 93% of timeline) and national holidays (Christmas Day consistently absent). This is a **data quality strength**, not a flaw, as it accurately reflects business reality.
+1. **Dữ liệu thưa thớt đáng kể phản ánh hoạt động cửa hàng**: 8,4% bản ghi ngày–cửa hàng dự kiến bị thiếu trong dữ liệu thô (7.664 trong số 91.152 bản ghi dự kiến). Tuy nhiên, điều này **không ngẫu nhiên** — dữ liệu thiếu tập trung ở các cửa hàng mới mở (cửa hàng 52 thiếu 93% lịch sử) và ngày lễ quốc gia (Ngày Giáng Sinh liên tục vắng mặt). Đây là **điểm mạnh chất lượng dữ liệu**, không phải lỗi, vì nó phản ánh chính xác thực tế kinh doanh.
 
-2. **Weekend traffic surge drives 26% uplift**: Saturdays average 1,953 transactions per store vs. Thursdays at 1,550 (+26%)—a strong weekly seasonality pattern. This foot traffic boost likely amplifies sales across all product families, making day-of-week a critical feature for forecasting.
+2. **Lưu lượng cuối tuần tăng vọt 26%**: Thứ Bảy trung bình 1.953 giao dịch mỗi cửa hàng so với Thứ Năm ở mức 1.550 (+26%) — mẫu tính mùa vụ hàng tuần mạnh mẽ. Sự tăng lưu lượng khách này có thể khuếch đại doanh số trên tất cả nhóm sản phẩm, khiến ngày trong tuần là đặc trưng quan trọng cho dự báo.
 
-3. **Extreme heterogeneity across stores**: Transaction volumes vary 6.8× between busiest (store 44: 4,337/day) and quietest (store 26: 635/day) locations. This suggests store-level fixed effects or embeddings are essential—one-size-fits-all models will underperform.
+3. **Tính không đồng nhất cực đoan giữa các cửa hàng**: Khối lượng giao dịch biến thiên 6,8 lần giữa cửa hàng bận nhất (cửa hàng 44: 4.337/ngày) và yên tĩnh nhất (cửa hàng 26: 635/ngày). Điều này cho thấy hiệu ứng cố định cấp cửa hàng hoặc embedding là cần thiết — mô hình một kích thước cho tất cả sẽ kém hiệu quả.
 
-4. **Christmas Eve spike reveals promotional opportunity**: December 24, 2015 recorded 171,169 total transactions (2× daily average)—the highest single-day traffic in dataset. This pre-holiday surge indicates customers stockpiling, creating a critical window for promotional effectiveness testing.
-
----
-
-## Dataset Overview
-
-### What This Dataset Contains
-The transactions dataset provides daily **transaction counts** at each store, serving as a **store activity proxy** to supplement sales forecasting. Unlike sales data (which varies by product family), transaction counts measure overall foot traffic—capturing how busy a store is regardless of what customers buy.
-
-**Core Specifications:**
-- **Rows**: 83,488 store-day records (raw data)
-- **Columns**: 3 features (date, store_nbr, transactions)
-- **Time Span**: January 1, 2013 to August 15, 2017 (1,688 days)
-- **Granularity**: Store-day level (no product family breakdown)
-- **Expected Full Panel**: 91,152 records (54 stores × 1,688 days)
-- **Missing**: 7,664 records (8.4% sparsity)
-
-### Business Context
-Transaction counts differ from sales revenue in important ways:
-- **Transaction count** = number of checkout events (baskets)
-- **Sales revenue** = dollar value of those baskets
-
-This distinction matters because:
-- **High transactions, low sales** → Customers buying cheap/essential items (value shoppers)
-- **Low transactions, high sales** → Customers buying expensive/bulk items (premium/wholesale shoppers)
-
-For forecasting, transactions provide a **store-level traffic indicator** that broadcasts to all product families—useful for separating "store was busy" from "this specific product family had high demand."
+4. **Đỉnh Đêm Giáng Sinh tiết lộ cơ hội khuyến mãi**: Ngày 24 tháng 12 năm 2015 ghi nhận 171.169 tổng giao dịch (gấp 2 lần trung bình hàng ngày) — lưu lượng cao nhất trong một ngày trong tập dữ liệu. Đợt tăng đột biến trước ngày lễ này cho thấy khách hàng tích trữ hàng, tạo ra cửa sổ quan trọng để kiểm tra hiệu quả khuyến mãi.
 
 ---
 
-## Data Structure & Characteristics
+## Tổng Quan Tập Dữ Liệu
 
-### Column Specifications
+### Nội Dung Tập Dữ Liệu
+Tập dữ liệu giao dịch cung cấp **số lượng giao dịch** hàng ngày tại mỗi cửa hàng, đóng vai trò là **proxy hoạt động cửa hàng** để bổ sung dự báo doanh số. Không giống dữ liệu doanh số (biến theo nhóm sản phẩm), số lượng giao dịch đo lường lưu lượng khách tổng thể — nắm bắt mức độ bận rộn của cửa hàng bất kể khách hàng mua gì.
 
-| Column | Type | Description | Value Range |
-|--------|------|-------------|-------------|
-| `date` | object (datetime) | Calendar date | 2013-01-01 to 2017-08-15 |
-| `store_nbr` | int64 | Store identifier | 1 - 54 |
-| `transactions` | int64 | Number of checkout transactions that day | 0 - 8,359 |
+**Thông Số Cốt Lõi:**
+- **Hàng**: 83.488 bản ghi ngày–cửa hàng (dữ liệu thô)
+- **Cột**: 3 đặc trưng (date, store_nbr, transactions)
+- **Khoảng Thời Gian**: 1 tháng 1 năm 2013 đến 15 tháng 8 năm 2017 (1.688 ngày)
+- **Độ Chi Tiết**: Cấp ngày–cửa hàng (không có phân tích theo nhóm sản phẩm)
+- **Bảng Đầy Đủ Dự Kiến**: 91.152 bản ghi (54 cửa hàng × 1.688 ngày)
+- **Thiếu**: 7.664 bản ghi (8,4% thưa thớt)
 
-**Critical Notes**:
-- **Primary key**: (date, store_nbr) composite—no duplicates found
-- **Store-level aggregation**: No product family dimension (broadcasts when joined to train.csv)
-- **Count data**: Transactions are discrete, non-negative integers
+### Bối Cảnh Kinh Doanh
+Số lượng giao dịch khác với doanh thu doanh số theo những cách quan trọng:
+- **Số lượng giao dịch** = số sự kiện thanh toán (giỏ hàng)
+- **Doanh thu doanh số** = giá trị đô la của những giỏ hàng đó
 
-### Panel Data Structure
+Sự phân biệt này quan trọng vì:
+- **Giao dịch cao, doanh số thấp** → Khách hàng mua mặt hàng rẻ/thiết yếu (người mua hàng theo giá trị)
+- **Giao dịch thấp, doanh số cao** → Khách hàng mua mặt hàng đắt/số lượng lớn (người mua cao cấp/bán buôn)
 
-**Expected vs. Actual Coverage**:
+Cho dự báo, giao dịch cung cấp **chỉ số lưu lượng cấp cửa hàng** phát sóng đến tất cả nhóm sản phẩm — hữu ích để tách "cửa hàng bận rộn" khỏi "nhóm sản phẩm cụ thể có nhu cầu cao".
+
+---
+
+## Cấu Trúc & Đặc Điểm Dữ Liệu
+
+### Thông Số Cột
+
+| Cột | Kiểu | Mô Tả | Phạm Vi Giá Trị |
+|-----|------|--------|-----------------|
+| `date` | object (datetime) | Ngày lịch | 2013-01-01 đến 2017-08-15 |
+| `store_nbr` | int64 | Định danh cửa hàng | 1 - 54 |
+| `transactions` | int64 | Số lượng giao dịch thanh toán trong ngày | 0 - 8.359 |
+
+**Lưu Ý Quan Trọng:**
+- **Khóa chính**: Tổ hợp (date, store_nbr) — không tìm thấy trùng lặp
+- **Tổng hợp cấp cửa hàng**: Không có chiều nhóm sản phẩm (phát sóng khi kết hợp với train.csv)
+- **Dữ liệu đếm**: Giao dịch là số nguyên rời rạc, không âm
+
+### Cấu Trúc Dữ Liệu Bảng
+
+**Phạm Vi Thực Tế vs. Dự Kiến:**
 ```
-Expected: 54 stores × 1,688 days = 91,152 store-days
-Actual:   83,488 store-days
-Missing:  7,664 store-days (8.4% sparsity)
+Dự Kiến:   54 cửa hàng × 1.688 ngày = 91.152 ngày-cửa hàng
+Thực Tế:   83.488 ngày-cửa hàng
+Thiếu:     7.664 ngày-cửa hàng (8,4% thưa thớt)
 ```
 
-**Why This Matters**:
-- Time series models require complete panels to compute lags/rolling features
-- **Solution applied**: Create full panel grid and impute missing records with `transactions = 0`, flagged via `is_imputed = 1`
+**Tại Sao Điều Này Quan Trọng:**
+- Mô hình chuỗi thời gian yêu cầu bảng đầy đủ để tính lag/đặc trưng cuộn
+- **Giải pháp áp dụng**: Tạo lưới bảng đầy đủ và điền giá trị thiếu với `transactions = 0`, đánh dấu qua `is_imputed = 1`
 
 ---
 
-## Key Findings & Patterns
+## Phát Hiện Chính & Mẫu
 
-### 1. Store Heterogeneity: 6.8× Volume Variance
+### 1. Tính Không Đồng Nhất Cửa Hàng: Phương Sai Khối Lượng 6,8 Lần
 
-**Transaction Volume by Store (Top 5 vs. Bottom 5)**:
+**Khối Lượng Giao Dịch Theo Cửa Hàng (Top 5 vs. Bottom 5):**
 
-| Rank | Store # | Avg Transactions/Day | Traffic Tier |
-|------|---------|----------------------|--------------|
-| 1 | 44 | 4,337 | Flagship (ultra-high traffic) |
-| 2 | 45 | 3,891 | Flagship |
-| 3 | 47 | 3,542 | High-traffic urban |
-| 4 | 3 | 3,201 | High-traffic urban |
-| 5 | 49 | 2,847 | Urban core |
+| Xếp Hạng | Cửa Hàng # | TB Giao Dịch/Ngày | Hạng Lưu Lượng |
+|----------|------------|-------------------|----------------|
+| 1 | 44 | 4.337 | Hàng đầu (lưu lượng cực cao) |
+| 2 | 45 | 3.891 | Hàng đầu |
+| 3 | 47 | 3.542 | Đô thị lưu lượng cao |
+| 4 | 3 | 3.201 | Đô thị lưu lượng cao |
+| 5 | 49 | 2.847 | Trung tâm đô thị |
 | ... | ... | ... | ... |
-| 50 | 33 | 721 | Low-traffic rural/suburban |
-| 51 | 20 | 698 | Low-traffic |
-| 52 | 52 | 683 | Newly opened (limited data) |
-| 53 | 43 | 651 | Low-traffic |
-| 54 | 26 | 635 | Minimal traffic |
+| 50 | 33 | 721 | Nông thôn/ngoại ô lưu lượng thấp |
+| 51 | 20 | 698 | Lưu lượng thấp |
+| 52 | 52 | 683 | Mới mở (dữ liệu hạn chế) |
+| 53 | 43 | 651 | Lưu lượng thấp |
+| 54 | 26 | 635 | Lưu lượng tối thiểu |
 
-**Critical Finding**: Store 44 averages **6.8× more transactions** than store 26—indicating massive heterogeneity in store size, location, or customer base.
+**Phát Hiện Quan Trọng**: Cửa hàng 44 trung bình **gấp 6,8 lần giao dịch** so với cửa hàng 26 — cho thấy tính không đồng nhất lớn về quy mô cửa hàng, vị trí, hoặc cơ sở khách hàng.
 
-**Business Implications**:
+**Hàm Ý Kinh Doanh:**
 
-1. **Modeling Strategy**: One global model will struggle—consider:
-   - Store-specific models or embeddings
-   - Hierarchical models with store-level random effects
-   - Stratified training (high-traffic vs. low-traffic stores)
+1. **Chiến Lược Mô Hình Hóa**: Một mô hình toàn cục sẽ gặp khó khăn — xem xét:
+   - Mô hình riêng theo cửa hàng hoặc embedding
+   - Mô hình phân cấp với hiệu ứng ngẫu nhiên cấp cửa hàng
+   - Huấn luyện phân tầng (cửa hàng lưu lượng cao vs. thấp)
 
-2. **Operational Insights**:
-   - High-traffic stores (44, 45, 47) likely need:
-     - More checkout lanes (to handle 4,000+ daily transactions)
-     - Deeper inventory (risk of stockouts higher)
-     - More staff (customer service load)
-   - Low-traffic stores (<700/day) may be:
-     - Rural/convenience formats (different customer behavior)
-     - Newly opened (still ramping up)
-     - Underperforming (potential closure candidates)
+2. **Thông Tin Vận Hành:**
+   - Cửa hàng lưu lượng cao (44, 45, 47) có thể cần:
+     - Nhiều làn thanh toán hơn (để xử lý 4.000+ giao dịch hàng ngày)
+     - Tồn kho sâu hơn (rủi ro hết hàng cao hơn)
+     - Nhiều nhân viên hơn (tải dịch vụ khách hàng)
+   - Cửa hàng lưu lượng thấp (<700/ngày) có thể là:
+     - Định dạng nông thôn/tiện lợi (hành vi khách hàng khác nhau)
+     - Mới mở (vẫn đang tăng dần)
+     - Kém hiệu quả (ứng viên đóng cửa tiềm năng)
 
-3. **Promotion Effectiveness**: Testing promotions in store 44 vs. store 26 may yield vastly different ROI—stratify experiments by traffic tier.
+3. **Hiệu Quả Khuyến Mãi**: Kiểm tra khuyến mãi ở cửa hàng 44 vs. cửa hàng 26 có thể cho ROI rất khác nhau — phân tầng thử nghiệm theo hạng lưu lượng.
 
-### 2. Weekly Seasonality: Weekend Traffic Surge
+### 2. Tính Mùa Vụ Hàng Tuần: Đợt Tăng Lưu Lượng Cuối Tuần
 
-**Average Transactions per Store-Day by Day of Week**:
+**Trung Bình Giao Dịch Mỗi Ngày–Cửa Hàng Theo Ngày Trong Tuần:**
 
-| Day | Avg Transactions | % vs. Baseline (Thursday) |
-|-----|------------------|---------------------------|
-| Saturday | 1,953 | +26.0% |
-| Sunday | 1,847 | +19.2% |
-| Friday | 1,612 | +4.0% |
-| Monday | 1,583 | +2.1% |
-| Tuesday | 1,551 | +0.1% |
-| Thursday | 1,550 | 0.0% (baseline) |
-| Wednesday | 1,541 | -0.6% |
+| Ngày | TB Giao Dịch | % So Với Cơ Sở (Thứ Năm) |
+|------|--------------|--------------------------|
+| Thứ Bảy | 1.953 | +26,0% |
+| Chủ Nhật | 1.847 | +19,2% |
+| Thứ Sáu | 1.612 | +4,0% |
+| Thứ Hai | 1.583 | +2,1% |
+| Thứ Ba | 1.551 | +0,1% |
+| Thứ Năm | 1.550 | 0,0% (cơ sở) |
+| Thứ Tư | 1.541 | -0,6% |
 
-**Key Observation**: **Saturday is 26% busier than Thursday**—a strong, consistent weekly pattern.
+**Quan Sát Chính**: **Thứ Bảy bận hơn Thứ Năm 26%** — mẫu hàng tuần mạnh mẽ và nhất quán.
 
-**Why This Matters for Forecasting**:
+**Tại Sao Điều Này Quan Trọng Cho Dự Báo:**
 
-1. **Feature Engineering**: Add day-of-week features (one-hot encoding or cyclic encoding with sine/cosine).
+1. **Feature Engineering**: Thêm đặc trưng ngày trong tuần (mã hóa one-hot hoặc mã hóa chu kỳ với sine/cosine).
 
-2. **Weekend Effect on Sales**: Weekend traffic surge likely boosts sales across **all product families** (not just specific categories), so:
-   - Don't attribute weekend sales lift solely to product-specific demand
-   - Separate "traffic-driven sales" from "product-driven sales" by including transaction counts as covariate
+2. **Hiệu Ứng Cuối Tuần Lên Doanh Số**: Đợt tăng lưu lượng cuối tuần có thể thúc đẩy doanh số trên **tất cả nhóm sản phẩm** (không chỉ danh mục cụ thể), vì vậy:
+   - Đừng quy doanh số tăng cuối tuần chỉ cho nhu cầu sản phẩm cụ thể
+   - Tách "doanh số do lưu lượng" khỏi "doanh số do sản phẩm" bằng cách đưa số lượng giao dịch làm biến đồng biến
 
-3. **Staffing & Inventory**: Retailers already know weekends are busy, but this quantifies it—Saturday needs **26% more capacity** than midweek.
+3. **Nhân Sự & Tồn Kho**: Nhà bán lẻ đã biết cuối tuần bận rộn, nhưng điều này định lượng nó — Thứ Bảy cần **nhiều hơn 26% công suất** so với giữa tuần.
 
-### 3. Holiday Traffic Spikes: Christmas Eve Dominance
+### 3. Đợt Tăng Lưu Lượng Ngày Lễ: Sự Thống Trị Đêm Giáng Sinh
 
-**Top 10 Highest Traffic Days (Total Transactions Across All Stores)**:
+**Top 10 Ngày Lưu Lượng Cao Nhất (Tổng Giao Dịch Trên Tất Cả Cửa Hàng):**
 
-| Date | Total Transactions | Multiple of Avg Daily |
-|------|-------------------|----------------------|
-| 2015-12-24 | 171,169 | 2.03× |
-| 2014-12-24 | 166,542 | 1.98× |
-| 2013-12-23 | 162,891 | 1.94× |
-| 2016-12-24 | 161,237 | 1.92× |
-| 2014-12-23 | 158,492 | 1.88× |
+| Ngày | Tổng Giao Dịch | Bội Số Trung Bình Hàng Ngày |
+|------|----------------|------------------------------|
+| 2015-12-24 | 171.169 | 2,03 lần |
+| 2014-12-24 | 166.542 | 1,98 lần |
+| 2013-12-23 | 162.891 | 1,94 lần |
+| 2016-12-24 | 161.237 | 1,92 lần |
+| 2014-12-23 | 158.492 | 1,88 lần |
 
-**Average Daily Total**: ~84,114 transactions (across all 54 stores)
+**Tổng Hàng Ngày Trung Bình**: ~84.114 giao dịch (trên tất cả 54 cửa hàng)
 
-**Critical Finding**: **December 23-24 consistently dominates** traffic—reaching **2× normal levels**. This is pre-Christmas stockpiling behavior.
+**Phát Hiện Quan Trọng**: **Ngày 23-24 tháng 12 liên tục thống trị** lưu lượng — đạt **gấp 2 lần mức bình thường**. Đây là hành vi tích trữ trước Giáng Sinh.
 
-**Business Implications**:
+**Hàm Ý Kinh Doanh:**
 
-1. **Promotional Strategy**: Christmas Eve traffic spike suggests:
-   - High customer urgency (last-minute shopping)
-   - Willingness to buy in bulk (stocking up for holiday)
-   - **Opportunity**: Test premium pricing vs. deep discounts—customers may be less price-sensitive when urgency is high
+1. **Chiến Lược Khuyến Mãi**: Đợt tăng lưu lượng Đêm Giáng Sinh gợi ý:
+   - Tính cấp bách cao của khách hàng (mua sắm vào phút cuối)
+   - Sẵn lòng mua số lượng lớn (tích trữ cho ngày lễ)
+   - **Cơ hội**: Kiểm tra giá cao cấp vs. giảm giá sâu — khách hàng có thể ít nhạy cảm về giá khi tính cấp bách cao
 
-2. **Inventory Risk**: If 2× normal traffic but inventory not doubled, risk of catastrophic stockouts (losing sales at peak demand).
+2. **Rủi Ro Tồn Kho**: Nếu lưu lượng gấp 2 lần nhưng tồn kho không được tăng gấp đôi, có nguy cơ hết hàng thảm khốc (mất doanh số vào đỉnh nhu cầu).
 
-3. **Forecasting**: Models without holiday features will **severely underpredict** December 23-24. Must integrate `holidays_events.csv` to flag pre-holiday days.
+3. **Dự Báo**: Mô hình không có đặc trưng ngày lễ sẽ **dự báo thấp nghiêm trọng** ngày 23-24 tháng 12. Phải tích hợp `holidays_events.csv` để đánh dấu ngày trước ngày lễ.
 
-### 4. Missing Data as Business Signal: Store Openings & Closures
+### 4. Dữ Liệu Thiếu Như Tín Hiệu Kinh Doanh: Mở Cửa & Đóng Cửa Hàng
 
-**Stores with Highest Missing Data Rates**:
+**Cửa Hàng Có Tỷ Lệ Dữ Liệu Thiếu Cao Nhất:**
 
-| Store # | Missing Days | % of Timeline | Interpretation |
-|---------|--------------|---------------|----------------|
-| 52 | 1,570 | 93% | Opened April 20, 2017 (only 118 days active) |
-| 22 | 1,017 | 60% | Opened late or frequent closures |
-| 42 | 968 | 57% | Late opening or data collection gap |
-| 21 | 940 | 56% | Late opening |
-| 29 | 814 | 48% | Partial timeline coverage |
+| Cửa Hàng # | Ngày Thiếu | % Lịch Sử | Diễn Giải |
+|------------|------------|-----------|-----------|
+| 52 | 1.570 | 93% | Mở 20/4/2017 (chỉ 118 ngày hoạt động) |
+| 22 | 1.017 | 60% | Mở muộn hoặc đóng cửa thường xuyên |
+| 42 | 968 | 57% | Mở muộn hoặc khoảng trống thu thập dữ liệu |
+| 21 | 940 | 56% | Mở muộn |
+| 29 | 814 | 48% | Phạm vi lịch sử một phần |
 
-**Dates With Zero Records Across All Stores (Store Closures)**:
-- **December 25** (2013, 2014, 2015, 2016) — Christmas Day
-- **January 1, 2016** — New Year's Day
-- **January 3, 2016** — Post-holiday closure
+**Ngày Không Có Bản Ghi Nào Từ Tất Cả Cửa Hàng (Đóng Cửa Toàn Bộ):**
+- **25 tháng 12** (2013, 2014, 2015, 2016) — Ngày Giáng Sinh
+- **1 tháng 1 năm 2016** — Ngày Năm Mới
+- **3 tháng 1 năm 2016** — Đóng cửa sau ngày lễ
 
-**What This Means**:
+**Ý Nghĩa:**
 
-1. **Not random missingness**: Missing data is **structurally informative**:
-   - New stores (like 52) physically didn't exist for 93% of timeline
-   - National holidays → all stores closed → legitimately 0 transactions
+1. **Không phải thiếu ngẫu nhiên**: Dữ liệu thiếu có **thông tin cấu trúc**:
+   - Cửa hàng mới (như 52) vật lý không tồn tại trong 93% lịch sử
+   - Ngày lễ quốc gia → tất cả cửa hàng đóng cửa → hợp lệ 0 giao dịch
 
-2. **Imputation Strategy**: Fill missing with `transactions = 0` is **correct**, but add `is_imputed` flag:
-   - `is_imputed = 1` → Store wasn't open or data not collected
-   - `is_imputed = 0` → Store was open and recorded 0-N transactions
+2. **Chiến Lược Điền Thiếu**: Điền thiếu với `transactions = 0` là **đúng**, nhưng thêm cờ `is_imputed`:
+   - `is_imputed = 1` → Cửa hàng không mở hoặc không thu thập được dữ liệu
+   - `is_imputed = 0` → Cửa hàng mở và ghi nhận 0-N giao dịch
 
-3. **Modeling Implication**: For stores like 52, early timeline has **no signal** (store didn't exist). Consider:
-   - Masking pre-opening periods in training
-   - Or using `is_imputed` as feature to let model learn "this store was closed"
-
----
-
-## Data Quality Assessment
-
-### Completeness: Good (after imputation) ✅
-
-**Raw Data Missing Values**:
-```
-Column          Missing Values    Percentage
-date            0                 0.0%
-store_nbr       0                 0.0%
-transactions    0                 0.0%
-```
-
-**Assessment**: Zero missing in raw records. However, **full panel has 8.4% sparsity** (expected 91,152 records, got 83,488).
-
-**Solution Applied**:
-1. Generate full panel grid: All 54 stores × All 1,688 days
-2. Left join raw data
-3. Impute missing `transactions = 0` with `is_imputed = 1` flag
-
-**After Imputation**: 91,152 complete records (100% coverage).
-
-### Consistency: Excellent ✅
-
-**✅ Strengths:**
-- **No duplicates**: (date, store_nbr) pairs are unique
-- **No negative values**: `transactions` range is 0 - 8,359 (all valid)
-- **No outliers**: Max of 8,359 is plausible for busy stores (matches store 44's high-traffic profile)
-- **Date continuity**: After imputation, every date from 2013-01-01 to 2017-08-15 is covered
-
-**⚠️ Areas to Verify:**
-1. **Store 52 ramp-up**: Newly opened store may show unusual growth trajectory—verify sales patterns align with transaction growth
-2. **Zero transactions on open days**: Some records show 0 transactions when store was supposedly open—could be:
-   - Data collection failure
-   - Actual closure (e.g., emergency, renovation)
-   - Or genuinely no customers that day (unlikely but possible)
+3. **Hàm Ý Mô Hình Hóa**: Với các cửa hàng như 52, lịch sử sớm **không có tín hiệu** (cửa hàng chưa tồn tại). Xem xét:
+   - Che giấu kỳ trước khi mở trong dữ liệu huấn luyện
+   - Hoặc dùng `is_imputed` làm đặc trưng để mô hình học "cửa hàng này đã đóng cửa"
 
 ---
 
-## Business Implications
+## Đánh Giá Chất Lượng Dữ Liệu
 
-### 1. Transaction Count as Traffic Proxy
+### Tính Đầy Đủ: Tốt (sau khi điền thiếu) ✅
 
-**Key Use Case**: Decompose sales into components:
+**Giá Trị Thiếu Trong Dữ Liệu Thô:**
 ```
-Sales = Traffic × Conversion Rate × Basket Size
+Cột             Giá Trị Thiếu    Phần Trăm
+date            0                 0,0%
+store_nbr       0                 0,0%
+transactions    0                 0,0%
 ```
 
-Where:
-- **Traffic** = transaction count (this dataset)
-- **Conversion Rate** = % of store visitors who buy
-- **Basket Size** = average sales per transaction
+**Đánh Giá**: Không có giá trị thiếu trong bản ghi thô. Tuy nhiên, **bảng đầy đủ có 8,4% thưa thớt** (91.152 bản ghi dự kiến, nhận được 83.488).
 
-**Modeling Application**:
-- Include `transactions` as covariate in sales forecasting models
-- If sales spike but transactions don't → customers buying more per visit (basket size up)
-- If transactions spike but sales don't → customers buying cheaper items (basket size down)
+**Giải Pháp Áp Dụng:**
+1. Tạo lưới bảng đầy đủ: Tất cả 54 cửa hàng × Tất cả 1.688 ngày
+2. Kết hợp trái dữ liệu thô
+3. Điền `transactions = 0` bị thiếu với cờ `is_imputed = 1`
 
-This decomposition helps diagnose **why** sales change (traffic vs. behavior shift).
+**Sau Khi Điền Thiếu**: 91.152 bản ghi đầy đủ (100% phủ sóng).
 
-### 2. Store Clustering by Traffic Patterns
+### Tính Nhất Quán: Xuất Sắc ✅
 
-**Hypothesis**: Stores with similar transaction patterns likely share:
-- Customer demographics
-- Geographic characteristics (urban vs. rural)
-- Store format (supermarket vs. convenience)
+**✅ Điểm Mạnh:**
+- **Không có trùng lặp**: Các cặp (date, store_nbr) là duy nhất
+- **Không có giá trị âm**: Phạm vi `transactions` là 0 - 8.359 (tất cả hợp lệ)
+- **Không có ngoại lệ**: Max 8.359 là hợp lý cho cửa hàng bận rộn (phù hợp hồ sơ lưu lượng cao của cửa hàng 44)
+- **Tính liên tục ngày**: Sau khi điền thiếu, mỗi ngày từ 2013-01-01 đến 2017-08-15 được phủ sóng
 
-**Clustering Strategy**:
-1. Extract features per store:
-   - Mean transactions/day
-   - Weekend uplift %
-   - Holiday spike intensity
-   - Coefficient of variation (volatility)
-2. Run k-means or hierarchical clustering
-3. Result: Store typology (e.g., "high-traffic urban," "low-traffic rural," "seasonal tourist")
-
-**Business Value**: Tailor strategies by cluster (e.g., urban stores need different promotions than rural).
-
-### 3. Promotion Effectiveness Testing
-
-**Experiment Design**:
-- **Control group**: Stores with typical traffic (no promotion)
-- **Treatment group**: Stores with promotion
-- **Metric**: Compare **sales per transaction** (basket size) between groups
-
-**Why this works**: If promotion increases sales but **not** transactions, it means:
-- Same customers came (traffic unchanged)
-- But they bought more (basket size up)
-- → Promotion successfully upsold existing traffic
-
-If promotion increases **both** sales and transactions, it means:
-- More customers came (traffic up)
-- → Promotion successfully attracted new visitors
-
-### 4. Staffing & Capacity Planning
-
-**Actionable Insight**:
-- **Saturday needs 26% more cashiers** than Thursday (to handle 1,953 vs. 1,550 transactions)
-- **Christmas Eve needs 100% more capacity** (2× normal traffic)
-- Low-traffic stores (<700/day) may be over-staffed if using same ratios as high-traffic stores
-
-**ROI**: Right-sizing staffing reduces labor costs while maintaining service quality.
+**⚠️ Khu Vực Cần Xác Minh:**
+1. **Tăng tốc cửa hàng 52**: Cửa hàng mới mở có thể cho thấy quỹ đạo tăng trưởng bất thường — xác minh mẫu doanh số phù hợp với tăng trưởng giao dịch
+2. **Giao dịch bằng không trong ngày mở cửa**: Một số bản ghi có 0 giao dịch khi cửa hàng được cho là mở — có thể là:
+   - Lỗi thu thập dữ liệu
+   - Đóng cửa thực tế (ví dụ: khẩn cấp, sửa chữa)
+   - Hoặc thực sự không có khách hàng hôm đó (không chắc nhưng có thể)
 
 ---
 
-## Integration & Next Steps
+## Hàm Ý Kinh Doanh
 
-### Integration with Other Datasets
+### 1. Số Lượng Giao Dịch Như Proxy Lưu Lượng
 
-**Join Strategy**:
+**Trường Hợp Sử Dụng Chính**: Phân rã doanh số thành các thành phần:
+```
+Doanh Số = Lưu Lượng × Tỷ Lệ Chuyển Đổi × Giá Trị Giỏ Hàng
+```
+
+Trong đó:
+- **Lưu Lượng** = số lượng giao dịch (tập dữ liệu này)
+- **Tỷ Lệ Chuyển Đổi** = % khách thăm cửa hàng mua hàng
+- **Giá Trị Giỏ Hàng** = doanh số trung bình mỗi giao dịch
+
+**Ứng Dụng Mô Hình Hóa:**
+- Đưa `transactions` làm biến đồng biến trong mô hình dự báo doanh số
+- Nếu doanh số tăng vọt nhưng giao dịch không tăng → khách hàng mua nhiều hơn mỗi lần ghé thăm (giá trị giỏ hàng tăng)
+- Nếu giao dịch tăng vọt nhưng doanh số không tăng → khách hàng mua mặt hàng rẻ hơn (giá trị giỏ hàng giảm)
+
+Phân rã này giúp chẩn đoán **tại sao** doanh số thay đổi (lưu lượng vs. thay đổi hành vi).
+
+### 2. Phân Cụm Cửa Hàng Theo Mẫu Lưu Lượng
+
+**Giả Thuyết**: Các cửa hàng có mẫu giao dịch tương tự có thể chia sẻ:
+- Nhân khẩu học khách hàng
+- Đặc điểm địa lý (đô thị vs. nông thôn)
+- Định dạng cửa hàng (siêu thị vs. tiện lợi)
+
+**Chiến Lược Phân Cụm:**
+1. Trích xuất đặc trưng mỗi cửa hàng:
+   - Trung bình giao dịch/ngày
+   - % uplift cuối tuần
+   - Cường độ đỉnh ngày lễ
+   - Hệ số biến thiên (biến động)
+2. Chạy k-means hoặc phân cụm phân cấp
+3. Kết quả: Phân loại cửa hàng (ví dụ: "đô thị lưu lượng cao", "nông thôn lưu lượng thấp", "khách du lịch theo mùa")
+
+**Giá Trị Kinh Doanh**: Điều chỉnh chiến lược theo cụm (ví dụ: cửa hàng đô thị cần khuyến mãi khác cửa hàng nông thôn).
+
+### 3. Kiểm Tra Hiệu Quả Khuyến Mãi
+
+**Thiết Kế Thử Nghiệm:**
+- **Nhóm kiểm soát**: Cửa hàng có lưu lượng điển hình (không có khuyến mãi)
+- **Nhóm điều trị**: Cửa hàng có khuyến mãi
+- **Số liệu**: So sánh **doanh số mỗi giao dịch** (giá trị giỏ hàng) giữa các nhóm
+
+**Tại Sao Điều Này Hiệu Quả**: Nếu khuyến mãi tăng doanh số nhưng **không** tăng giao dịch, nghĩa là:
+- Cùng lượng khách đến (lưu lượng không đổi)
+- Nhưng họ mua nhiều hơn (giá trị giỏ hàng tăng)
+- → Khuyến mãi bán thêm thành công cho lưu lượng hiện có
+
+Nếu khuyến mãi tăng **cả** doanh số lẫn giao dịch, nghĩa là:
+- Nhiều khách hàng hơn đến (lưu lượng tăng)
+- → Khuyến mãi thu hút thành công khách mới
+
+### 4. Lập Kế Hoạch Nhân Sự & Công Suất
+
+**Thông Tin Có Thể Hành Động:**
+- **Thứ Bảy cần thêm 26% thu ngân** so với Thứ Năm (để xử lý 1.953 vs. 1.550 giao dịch)
+- **Đêm Giáng Sinh cần gấp đôi công suất** (lưu lượng gấp 2 lần bình thường)
+- Cửa hàng lưu lượng thấp (<700/ngày) có thể dư thừa nhân sự nếu dùng cùng tỷ lệ như cửa hàng lưu lượng cao
+
+**ROI**: Phân bổ nhân sự đúng mức giảm chi phí lao động trong khi duy trì chất lượng dịch vụ.
+
+---
+
+## Tích Hợp & Bước Tiếp Theo
+
+### Tích Hợp Với Các Tập Dữ Liệu Khác
+
+**Chiến Lược Kết Hợp:**
 ```python
-# Merge transactions into sales data (many-to-one: many families per store-day)
+# Kết hợp giao dịch vào dữ liệu doanh số (nhiều-một: nhiều nhóm mỗi ngày-cửa hàng)
 df_train = df_train.merge(df_transactions[['date', 'store_nbr', 'transactions', 'is_imputed']],
                           on=['date', 'store_nbr'],
                           how='left')
 ```
 
-**Expected Result**: Each store-family-day record in train.csv inherits same `transactions` count (broadcast).
+**Kết Quả Dự Kiến**: Mỗi bản ghi ngày–cửa hàng–nhóm trong train.csv kế thừa cùng số lượng `transactions` (phát sóng).
 
-**Validation Checks**:
-1. **Date range alignment**: Verify transactions.csv covers full train.csv date range
-2. **Store coverage**: All 54 stores in train.csv should have matching transaction data
-3. **Imputation flag**: Check if high `is_imputed` rates correlate with low sales (confirming store closures)
+**Kiểm Tra Xác Thực:**
+1. **Căn chỉnh phạm vi ngày**: Xác minh transactions.csv bao phủ toàn bộ phạm vi ngày của train.csv
+2. **Phủ sóng cửa hàng**: Tất cả 54 cửa hàng trong train.csv phải có dữ liệu giao dịch khớp
+3. **Cờ điền thiếu**: Kiểm tra xem tỷ lệ `is_imputed` cao có tương quan với doanh số thấp không (xác nhận đóng cửa hàng)
 
-### Recommended Feature Engineering
+### Feature Engineering Được Khuyến Nghị
 
-**1. Lag Features** (capture momentum):
+**1. Đặc Trưng Lag** (nắm bắt động lực):
 ```python
-# Per-store lags
+# Lag mỗi cửa hàng
 df_transactions['trans_lag_1'] = df_transactions.groupby('store_nbr')['transactions'].shift(1)
 df_transactions['trans_lag_7'] = df_transactions.groupby('store_nbr')['transactions'].shift(7)
 df_transactions['trans_lag_14'] = df_transactions.groupby('store_nbr')['transactions'].shift(14)
 ```
 
-**2. Rolling Statistics** (smooth noise):
+**2. Thống Kê Cuộn** (làm mịn nhiễu):
 ```python
-# 7-day rolling mean per store
+# Trung bình cuộn 7 ngày mỗi cửa hàng
 df_transactions['trans_roll_7'] = (
     df_transactions.groupby('store_nbr')['transactions']
     .rolling(7, min_periods=1).mean()
@@ -344,81 +344,81 @@ df_transactions['trans_roll_7'] = (
 )
 ```
 
-**3. Weekend/Holiday Interactions**:
+**3. Tương Tác Cuối Tuần/Ngày Lễ:**
 ```python
-# Flag weekend
+# Đánh dấu cuối tuần
 df_transactions['is_weekend'] = df_transactions['date'].dt.dayofweek.isin([5, 6]).astype(int)
 
-# Interaction: weekend × store type (after merging stores.csv)
+# Tương tác: cuối tuần × loại cửa hàng (sau khi kết hợp stores.csv)
 df_merged['weekend_effect'] = df_merged['is_weekend'] * (df_merged['type'] == 'A').astype(int)
 ```
 
-**4. Normalized Traffic** (account for store heterogeneity):
+**4. Lưu Lượng Chuẩn Hóa** (tính đến tính không đồng nhất cửa hàng):
 ```python
-# Z-score per store (standardize to mean=0, std=1)
+# Z-score mỗi cửa hàng (chuẩn hóa về mean=0, std=1)
 store_stats = df_transactions.groupby('store_nbr')['transactions'].agg(['mean', 'std'])
 df_transactions = df_transactions.merge(store_stats, on='store_nbr', suffixes=('', '_store'))
 df_transactions['trans_zscore'] = (df_transactions['transactions'] - df_transactions['mean']) / df_transactions['std']
 ```
 
-### Next Steps for Validation
+### Bước Tiếp Theo Để Xác Thực
 
-**Immediate Actions**:
+**Hành Động Ngay:**
 
-1. **Correlation Analysis**:
+1. **Phân Tích Tương Quan:**
    ```python
-   # Merge transactions with sales, calculate correlation
+   # Kết hợp giao dịch với doanh số, tính tương quan
    df_merged = df_train.merge(df_transactions, on=['date', 'store_nbr'])
    correlation = df_merged[['sales', 'transactions']].corr()
-   # Expected: positive correlation (more traffic → more sales)
+   # Kỳ vọng: tương quan dương (nhiều lưu lượng → nhiều doanh số hơn)
    ```
 
-2. **Sales per Transaction Analysis**:
+2. **Phân Tích Doanh Số Mỗi Giao Dịch:**
    ```python
-   # Calculate basket size
+   # Tính giá trị giỏ hàng
    df_merged['basket_size'] = df_merged['sales'] / df_merged['transactions'].replace(0, np.nan)
-   # Analyze: Does basket size vary by store type? By day of week?
+   # Phân tích: Giá trị giỏ hàng có thay đổi theo loại cửa hàng? Theo ngày trong tuần?
    ```
 
-3. **Imputation Flag Validation**:
+3. **Xác Thực Cờ Điền Thiếu:**
    ```python
-   # Compare sales on imputed vs. non-imputed days
+   # So sánh doanh số trong ngày điền thiếu vs. không điền thiếu
    df_merged.groupby('is_imputed')['sales'].agg(['mean', 'median', 'sum'])
-   # Expect: imputed days (store closed) have ~0 sales
+   # Kỳ vọng: ngày điền thiếu (cửa hàng đóng) có doanh số ~0
    ```
 
-4. **Store Opening Timeline**:
+4. **Dòng Thời Gian Mở Cửa Hàng:**
    ```python
-   # Identify first active date per store
+   # Xác định ngày hoạt động đầu tiên mỗi cửa hàng
    store_openings = df_transactions[df_transactions['is_imputed'] == 0].groupby('store_nbr')['date'].min()
-   # Use to mask pre-opening periods in training data
+   # Dùng để che giấu kỳ trước khi mở trong dữ liệu huấn luyện
    ```
 
 ---
 
-## Conclusion
+## Kết Luận
 
-The transactions dataset is a **high-quality, business-critical traffic indicator** with excellent consistency and strategic value for retail forecasting. With only 8.4% sparsity (structurally explained by store openings/holidays), it provides:
+Tập dữ liệu giao dịch là **chỉ số lưu lượng chất lượng cao, quan trọng cho kinh doanh** với tính nhất quán xuất sắc và giá trị chiến lược cho dự báo bán lẻ. Với chỉ 8,4% thưa thớt (được giải thích về mặt cấu trúc bởi mở cửa hàng/ngày lễ), nó cung cấp:
 
-1. **Store activity proxy** to separate foot traffic effects from product-specific demand
-2. **Strong weekly seasonality** (26% weekend uplift) for time-series modeling
-3. **Holiday surge detection** (2× normal traffic on Christmas Eve)
-4. **Store heterogeneity insights** (6.8× variance between busiest/quietest stores)
+1. **Proxy hoạt động cửa hàng** để tách hiệu ứng lưu lượng khỏi nhu cầu sản phẩm cụ thể
+2. **Tính mùa vụ hàng tuần mạnh mẽ** (26% uplift cuối tuần) cho mô hình hóa chuỗi thời gian
+3. **Phát hiện đỉnh ngày lễ** (lưu lượng gấp 2 lần vào Đêm Giáng Sinh)
+4. **Thông tin tính không đồng nhất cửa hàng** (phương sai 6,8 lần giữa cửa hàng bận nhất/yên tĩnh nhất)
 
-**Key Strengths**:
-- Zero missing in raw data (100% complete records)
-- No duplicates (clean primary key)
-- Structurally informative missingness (not data quality issue)
-- Wide dynamic range (0-8,359) captures real variance
+**Điểm Mạnh Chính:**
+- Không có giá trị thiếu trong dữ liệu thô (100% bản ghi đầy đủ)
+- Không có trùng lặp (khóa chính sạch)
+- Dữ liệu thiếu có thông tin cấu trúc (không phải vấn đề chất lượng dữ liệu)
+- Phạm vi động rộng (0-8.359) nắm bắt phương sai thực tế
 
-**Key Risks**:
-- Imputation needed for 8.4% of full panel (mitigated by `is_imputed` flag)
-- Newly opened stores (e.g., store 52) have sparse history—may need separate models
-- Weekend/holiday effects require explicit features (models won't auto-detect without encoding)
+**Rủi Ro Chính:**
+- Cần điền thiếu cho 8,4% bảng đầy đủ (giảm thiểu bởi cờ `is_imputed`)
+- Cửa hàng mới mở (ví dụ: cửa hàng 52) có lịch sử thưa thớt — có thể cần mô hình riêng
+- Hiệu ứng cuối tuần/ngày lễ đòi hỏi đặc trưng rõ ràng (mô hình sẽ không tự phát hiện nếu không mã hóa)
 
-**Success Metrics**:
-- After joining with sales: Confirm positive correlation between transactions and sales
-- Feature importance: Validate transaction-based features rank in top 10 predictors
-- Basket size analysis: Identify stores/days with abnormal sales-per-transaction ratios
+**Chỉ Số Thành Công:**
+- Sau khi kết hợp với doanh số: Xác nhận tương quan dương giữa giao dịch và doanh số
+- Tầm quan trọng đặc trưng: Xác thực đặc trưng dựa trên giao dịch nằm trong top 10 dự đoán
+- Phân tích giá trị giỏ hàng: Xác định cửa hàng/ngày có tỷ lệ doanh số-mỗi-giao dịch bất thường
 
-This dataset should be **immediately integrated** into forecasting pipelines—its store-level granularity and temporal patterns make it essential for capturing traffic-driven sales dynamics.
+Tập dữ liệu này nên được **tích hợp ngay** vào quy trình dự báo — độ chi tiết cấp cửa hàng và mẫu thời gian của nó là thiết yếu để nắm bắt động lực bán hàng do lưu lượng thúc đẩy.

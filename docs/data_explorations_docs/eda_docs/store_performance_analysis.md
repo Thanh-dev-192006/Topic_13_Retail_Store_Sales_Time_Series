@@ -1,194 +1,189 @@
-# Store Performance Analysis - Summary Report
+# Báo Cáo Tổng Hợp Phân Tích Hiệu Suất Cửa Hàng
 
 ## Tổng Quan
 
-Phân tích performance của **54 cửa hàng** trong hệ thống bán lẻ tại Ecuador, sử dụng dữ liệu sales từ 2013-01-01 đến 2017-08-15 (~1,684 ngày). Dữ liệu gồm 3,000,888 records (54 stores × 33 product families × ~1,684 days).
+Phân tích hiệu suất của **54 cửa hàng** trong hệ thống bán lẻ tại Ecuador, sử dụng dữ liệu sales từ 2013-01-01 đến 2017-08-15 (~1.684 ngày). Dữ liệu gồm 3.000.888 bản ghi (54 cửa hàng × 33 nhóm sản phẩm × ~1.684 ngày).
 
 **Datasets sử dụng:**
 - `train.csv`: Dữ liệu sales (id, date, store_nbr, family, sales, onpromotion)
-- `stores.csv`: Metadata stores (store_nbr, city, state, type, cluster)
+- `stores.csv`: Metadata cửa hàng (store_nbr, city, state, type, cluster)
 
 ---
 
-## 1. Store Segmentation Insights
+## 1. Phân Khúc Cửa Hàng
 
-### 1.1. Store Types (A, B, C, D, E)
+### 1.1. Loại Cửa Hàng (A, B, C, D, E)
 
-| Aspect | Findings |
+| Khía cạnh | Phát hiện |
 |--------|----------|
-| **Phân bố** | 5 types với số lượng stores khác nhau |
-| **Sales difference** | Significant difference giữa các types (Kruskal-Wallis test) |
-| **Type A/D** | Thường có sales cao nhất - đây có thể là stores lớn, vị trí đắc địa |
-| **Type C/E** | Sales thấp hơn - có thể là stores nhỏ hoặc ở khu vực ít dân cư |
-| **Volatility** | Types có sales cao cũng có variance cao hơn (CV) |
+| **Phân bố** | 5 loại với số lượng cửa hàng khác nhau |
+| **Khác biệt doanh số** | Sự khác biệt có ý nghĩa giữa các loại (kiểm định Kruskal-Wallis, p=0,000256) |
+| **Loại A** | Doanh số cao nhất — đây có thể là cửa hàng lớn, vị trí đắc địa (trung bình 39,2 triệu USD/cửa hàng) |
+| **Loại C/E** | Doanh số thấp hơn — có thể là cửa hàng nhỏ hoặc ở khu vực ít dân cư |
+| **Biến động** | Các loại có doanh số cao cũng có CV cao hơn — biến động lớn hơn |
 
-**Key Insight:** Store type là proxy tốt cho store size/capacity. Nên dùng type làm feature trong model.
+**Phát Hiện Chính:** Loại cửa hàng là proxy tốt cho quy mô/công suất cửa hàng. Nên dùng loại làm feature trong mô hình.
 
-### 1.2. Clusters (1-17)
+### 1.2. Cluster (1-17)
 
-| Aspect | Findings |
+| Khía cạnh | Phát hiện |
 |--------|----------|
-| **Ý nghĩa** | Clusters nhóm stores theo đặc tính kinh doanh tương tự |
-| **Homogeneity** | Stores trong cùng cluster có sales pattern tương tự hơn so với cross-cluster |
-| **Type × Cluster** | Mỗi cluster thường chứa 1-2 store types → cluster = refinement của type |
-| **Sales range** | Clusters có significant difference về sales (Kruskal-Wallis test) |
+| **Ý nghĩa** | Cluster nhóm các cửa hàng có đặc tính kinh doanh tương tự |
+| **Tính đồng nhất** | Các cửa hàng trong cùng cluster có mẫu doanh số tương tự hơn so với giữa các cluster (CV nội cluster = 0,385) |
+| **Loại × Cluster** | Mỗi cluster thường chứa 1-2 loại cửa hàng → cluster là sự tinh chỉnh của loại |
+| **Phạm vi doanh số** | Các cluster có sự khác biệt đáng kể về doanh số (kiểm định Kruskal-Wallis) |
 
-**Key Insight:** Cluster captures nhiều information hơn type alone. Nên dùng cả type + cluster, hoặc dùng cluster thay type.
+**Phát Hiện Chính:** Cluster nắm bắt nhiều thông tin hơn loại đơn thuần. Nên dùng cả loại + cluster, hoặc dùng cluster thay loại.
 
-### 1.3. Performance Concentration
+### 1.3. Sự Tập Trung Hiệu Suất
 
-- **Top 5 stores** chiếm ~20% tổng sales
-- **Top 10 stores** chiếm ~40% tổng sales
-- **Bottom 10 stores** chỉ chiếm ~5% tổng sales
-- **Max/Min ratio**: Store lớn nhất có sales gấp ~20-25x store nhỏ nhất
+- **Top 5 cửa hàng** chiếm ~24,4% tổng doanh số
+- **Top 10 cửa hàng** chiếm ~40,2% tổng doanh số
+- **Bottom 10 cửa hàng** chỉ chiếm ~6,8% tổng doanh số
+- **Tỷ lệ Max/Min**: Cửa hàng lớn nhất có doanh số gấp ~23x cửa hàng nhỏ nhất (62,1 triệu USD vs 2,7 triệu USD)
 
 ---
 
-## 2. Geographic Insights
+## 2. Phân Tích Địa Lý
 
-### 2.1. City Analysis
+### 2.1. Phân Tích Theo Thành Phố
 
-| City | Đặc điểm |
+| Thành phố | Đặc điểm |
 |------|-----------|
-| **Quito** | Capital, nhiều stores nhất (~18), market chính, Highland region |
-| **Guayaquil** | Thành phố lớn thứ 2, coastal, sales per store cao |
-| **Ambato, Cuenca** | Thành phố vừa, 2-4 stores mỗi city |
-| **Các city nhỏ** | 1 store mỗi city, sales thấp hơn |
+| **Quito** | Thủ đô, nhiều cửa hàng nhất (~18-22), thị trường chính, vùng Highland |
+| **Guayaquil** | Thành phố lớn thứ 2, ven biển, doanh số bình quân mỗi cửa hàng cao |
+| **Ambato, Cuenca** | Thành phố vừa, 2-4 cửa hàng mỗi thành phố |
+| **Các thành phố nhỏ** | 1 cửa hàng mỗi thành phố, doanh số thấp hơn |
 
-### 2.2. State Analysis
+### 2.2. Phân Tích Theo Bang
 
-- **Pichincha** (Quito): Đóng góp nhiều nhất về total sales (do nhiều stores)
-- **Guayas** (Guayaquil): Sales per store cao, ít stores hơn Quito
+- **Pichincha** (Quito): Đóng góp nhiều nhất về tổng doanh số (do nhiều cửa hàng và doanh số mỗi cửa hàng cao)
+- **Guayas** (Guayaquil): Doanh số bình quân mỗi cửa hàng cao, ít cửa hàng hơn Quito
 
-### 2.3. Coastal vs Highland
+### 2.3. Ven Biển vs. Vùng Cao
 
-| Region | Đặc điểm |
+| Vùng | Đặc điểm |
 |--------|-----------|
-| **Coastal** (Guayas, Manabi, El Oro, etc.) | Sales per store có thể cao hơn, ít stores hơn |
-| **Highland** (Pichincha, Azuay, Tungurahua, etc.) | Nhiều stores hơn, sales phân tán hơn |
+| **Ven biển** (Guayas, Manabí, El Oro, ...) | Ít cửa hàng hơn; doanh số trung bình 15,0 triệu USD/cửa hàng |
+| **Vùng cao** (Pichincha, Azuay, Tungurahua, ...) | Nhiều cửa hàng hơn; doanh số trung bình 30,8 triệu USD/cửa hàng (Mann-Whitney có ý nghĩa) |
 
-**Key Insight:** Geographic region ảnh hưởng đến consumer behavior. Coastal và Highland có seasonal patterns khác nhau → nên dùng region/state làm feature.
-
----
-
-## 3. Data Quality & Patterns
-
-### 3.1. Zero Sales
-
-- **~31% records** có zero sales (store × family × day)
-- Một số stores có zero-sales rate **>40%** → stores nhỏ hoặc mới mở
-- Zero-sales rate **khác nhau** giữa store types (types nhỏ có zero rate cao hơn)
-- **Impact**: Cần xử lý zero-inflation trong model (Zero-Inflated models hoặc two-stage approach)
-
-### 3.2. Outlier Stores
-
-- Sử dụng Z-score detection trên 4 metrics: total_sales, avg_daily_sales, CV, zero_sales_pct
-- Stores có |Z| > 2 trên bất kỳ metric nào được flag là outlier
-- Outlier stores thường là: stores cực lớn (top 2-3) hoặc stores cực nhỏ/mới
-
-### 3.3. Temporal Consistency
-
-- **Most stable stores**: Performance rank ổn định qua các năm → predictable
-- **Least stable stores**: Rank thay đổi nhiều → có thể do expansion, renovation, hoặc market changes
-- **Seasonal patterns**: Tất cả stores đều có December peak và February dip
+**Phát Hiện Chính:** Vùng địa lý ảnh hưởng đến hành vi tiêu dùng. Ven biển và vùng cao có thể có mẫu mùa vụ khác nhau → nên dùng region/state làm feature.
 
 ---
 
-## 4. Store Predictability
+## 3. Chất Lượng Dữ Liệu & Mẫu
 
-Predictability Score (0-1) dựa trên:
-- **CV Score (40%)**: Inverse of coefficient of variation
-- **Zero Sales Score (30%)**: Inverse of zero-sales rate
-- **Stability Score (30%)**: Inverse of yearly rank standard deviation
+### 3.1. Doanh Số Bằng Không
 
-| Category | Đặc điểm |
+- **~31,3% bản ghi** có doanh số bằng không (cửa hàng × nhóm × ngày)
+- Cửa hàng 52 có tỷ lệ doanh số bằng không **93,5%** → cửa hàng mới mở (tháng 4 năm 2017)
+- Cửa hàng 44 có tỷ lệ thấp nhất ở **17,9%**
+- Tỷ lệ doanh số bằng không **khác nhau** giữa các loại cửa hàng (các loại nhỏ có tỷ lệ không cao hơn)
+- **Tác động**: Cần xử lý zero-inflation trong mô hình (mô hình Zero-Inflated hoặc phương pháp hai giai đoạn)
+
+### 3.2. Cửa Hàng Bất Thường
+
+- Sử dụng phát hiện Z-score trên 4 số liệu: total_sales, avg_daily_sales, CV, zero_sales_pct
+- Các cửa hàng có |Z| > 2 trên bất kỳ số liệu nào được gắn cờ là bất thường
+- Các cửa hàng bất thường thường là: cửa hàng cực lớn (top 2-3) hoặc cửa hàng cực nhỏ/mới
+
+### 3.3. Tính Nhất Quán Theo Thời Gian
+
+- **Cửa hàng ổn định nhất**: Xếp hạng hiệu suất ổn định qua các năm → dễ dự đoán
+- **Cửa hàng kém ổn định nhất**: Xếp hạng thay đổi nhiều → có thể do mở rộng, cải tạo hoặc thay đổi thị trường
+- **Mẫu mùa vụ**: Tất cả cửa hàng đều có đỉnh tháng 12 và đáy tháng 2
+
+---
+
+## 4. Khả Năng Dự Đoán Của Cửa Hàng
+
+Điểm Khả Năng Dự Đoán (0-1) dựa trên:
+- **Điểm CV (40%)**: Nghịch đảo của hệ số biến thiên
+- **Điểm Doanh Số Bằng Không (30%)**: Nghịch đảo của tỷ lệ doanh số bằng không
+- **Điểm Ổn Định (30%)**: Nghịch đảo của độ lệch chuẩn xếp hạng hàng năm
+
+| Loại | Đặc điểm |
 |----------|-----------|
-| **High predictability** | Stores lớn, Type A/D, ít zero sales, rank ổn định |
-| **Low predictability** | Stores nhỏ, Type C/E, nhiều zero sales, rank dao động |
+| **Khả năng dự đoán cao** | Cửa hàng lớn, Loại A, ít doanh số bằng không, xếp hạng ổn định |
+| **Khả năng dự đoán thấp** | Cửa hàng nhỏ, Loại C/E, nhiều doanh số bằng không, xếp hạng dao động |
 
 ---
 
-## 5. Recommendations cho Modeling
+## 5. Khuyến Nghị Cho Mô Hình Hóa
 
-### 5.1. Model Architecture
+### 5.1. Kiến Trúc Mô Hình
 
-| Approach | Pros | Cons | Recommendation |
+| Phương pháp | Ưu điểm | Nhược điểm | Khuyến nghị |
 |----------|------|------|----------------|
-| **Global model** (all stores) | Simple, ít parameters | Loses store-specific patterns | Baseline only |
-| **Model per store type** | Captures type differences | 5 models, moderate complexity | Good starting point |
-| **Model per cluster** | Better grouping than type | 17 models, some clusters small | Better than type |
-| **Model per store** | Best accuracy | 54 models, expensive, overfit risk | Only for top stores |
-| **Hierarchical model** | Best balance | Complex to implement | Recommended approach |
+| **Mô hình toàn cục** (tất cả cửa hàng) | Đơn giản, ít tham số | Mất mẫu đặc thù cửa hàng | Chỉ làm đường cơ sở |
+| **Mô hình theo loại cửa hàng** | Nắm bắt sự khác biệt loại | 5 mô hình, độ phức tạp vừa phải | Điểm khởi đầu tốt |
+| **Mô hình theo cluster** | Nhóm tốt hơn loại | 17 mô hình, một số cluster nhỏ | Tốt hơn theo loại |
+| **Mô hình theo cửa hàng** | Độ chính xác tốt nhất | 54 mô hình, tốn kém, rủi ro overfitting | Chỉ cho top 10 cửa hàng |
+| **Mô hình phân cấp** | Cân bằng tốt nhất | Phức tạp để triển khai | **Phương pháp khuyến nghị** |
 
 ### 5.2. Feature Engineering
 
-Từ phân tích này, các features quan trọng cho model:
+Từ phân tích này, các feature quan trọng cho mô hình:
 
-1. **Store-level features:**
-   - `store_type` (A-E): Categorical feature
-   - `cluster` (1-17): Categorical hoặc embedding
-   - `city`, `state`: Geographic features
-   - `region` (Coastal/Highland): Binary feature
-   - `store_avg_daily_sales`: Numeric, captures store size
-   - `store_zero_pct`: Numeric, captures sparsity
-   - `store_cv`: Numeric, captures volatility
+1. **Feature cấp cửa hàng:**
+   - `store_type` (A-E): Feature phân loại (p=0,000256)
+   - `store_cluster` (1-17): Phân loại hoặc embedding (CV nội cluster=0,385)
+   - `city`, `state`: Feature địa lý (không one-hot trực tiếp — dùng region)
+   - `region` (Coastal/Highland): Feature nhị phân (30,8M vs 15,0M USD/cửa hàng)
+   - `store_avg_daily_sales`: Số liệu, nắm bắt quy mô cửa hàng
+   - `store_zero_rate`: Số liệu, nắm bắt độ thưa thớt (17,9% đến 93,5%)
+   - `store_cv`: Số liệu, nắm bắt biến động
+   - `store_predictability_score`: Điểm tổng hợp (0,4*cv + 0,3*zero + 0,3*stability)
 
-2. **Interaction features:**
-   - `type × family`: Mỗi type có thể bán khác nhau cho từng family
-   - `cluster × season`: Seasonal patterns có thể khác nhau giữa clusters
-   - `region × holiday`: Holiday effects khác nhau giữa Coastal và Highland
+2. **Feature tương tác:**
+   - `type × family`: Mỗi loại có thể bán khác nhau cho từng nhóm hàng (xác nhận bởi heatmap Biểu đồ 36)
+   - `cluster × season`: Mẫu mùa vụ có thể khác nhau giữa các cluster
+   - `region × holiday`: Hiệu ứng ngày lễ khác nhau giữa Ven biển và Vùng cao
 
 ### 5.3. Chiến Lược Cụ Thể
 
-1. **Top 10-15 stores** (chiếm ~40% sales): Nên có individual models hoặc fine-tuned models
-2. **Stores có high zero-sales rate**: Dùng two-stage model (predict zero vs non-zero, rồi predict amount)
-3. **Cluster-based modeling**: Train model chung cho mỗi cluster, giúp stores ít data vẫn có model tốt
-4. **Temporal features**: Store-level seasonal decomposition nên được tính trước làm features
+1. **Top 10-15 cửa hàng** (chiếm ~40% doanh số, điểm khả năng dự đoán > 0,7): Nên có mô hình riêng lẻ hoặc mô hình được tinh chỉnh
+2. **Cửa hàng có tỷ lệ doanh số bằng không cao** (>50%, bao gồm Cửa hàng 52): Dùng mô hình hai giai đoạn (dự đoán không vs. khác không, rồi dự đoán số lượng)
+3. **Mô hình hóa dựa trên cluster**: Huấn luyện mô hình chung cho mỗi cluster, giúp các cửa hàng ít dữ liệu vẫn có mô hình tốt
+4. **Feature thời gian**: Phân rã mùa vụ cấp cửa hàng nên được tính trước làm feature
 
 ---
 
-## 6. Visualizations Đã Tạo
+## 6. Biểu Đồ Đã Tạo (Sau Kiểm Toán)
 
-| # | Visualization | File | Mô tả |
+| # | Biểu đồ | File | Mô tả |
 |---|---------------|------|--------|
-| 1 | Top/Bottom 10 Stores | `outputs/top_bottom_stores.png` | Bar chart so sánh stores tốt nhất và kém nhất |
-| 2 | Store Type Box Plots | `outputs/store_type_boxplots.png` | Distribution sales theo type A-E |
-| 3 | Cluster Analysis | `outputs/cluster_analysis.png` | Sales distribution + type composition theo cluster |
-| 4 | Cluster × Type Heatmap | `outputs/cluster_type_heatmap.png` | Cross-tabulation stores |
-| 5 | City Analysis | `outputs/city_analysis.png` | Average và total sales theo city |
-| 6 | State Analysis | `outputs/state_analysis.png` | Sales theo state |
-| 7 | Coastal vs Highland | `outputs/coastal_vs_highland.png` | So sánh 2 vùng địa lý |
-| 8 | Store × Time Heatmap | `outputs/store_time_heatmap.png` | Temporal consistency |
-| 9 | Store Consistency | `outputs/store_consistency.png` | Yearly trajectory + rank stability |
-| 10 | Scatter Analysis | `outputs/scatter_analysis.png` | Store characteristics vs sales |
-| 11 | Outlier Z-Scores | `outputs/outlier_zscore.png` | Z-score heatmap cho 54 stores |
-| 12 | Zero Sales Analysis | `outputs/zero_sales_analysis.png` | Zero-sales patterns |
-| 13 | Family by Type | `outputs/family_by_type.png` | Product family × store type |
-| 14 | Predictability Score | `outputs/predictability_score.png` | Store predictability ranking |
+| 1 | Top/Bottom 10 Cửa Hàng | `outputs/top_bottom_stores.png` | Biểu đồ cột so sánh cửa hàng tốt nhất và kém nhất |
+| 2 | Biểu đồ Hộp Loại Cửa Hàng | `outputs/store_type_boxplots.png` | Phân phối doanh số theo loại A-E |
+| 3 | Phân Tích Doanh Số Bằng Không | `outputs/zero_sales_analysis.png` | Mẫu doanh số bằng không theo cửa hàng và loại |
+| 4 | Nhóm Hàng × Loại Cửa Hàng | `outputs/family_by_type.png` | Cơ cấu nhóm sản phẩm × loại cửa hàng |
+| 5 | Điểm Khả Năng Dự Đoán | `outputs/predictability_score.png` | Xếp hạng khả năng dự đoán cửa hàng |
+
+*(Biểu đồ 6-14 của phiên bản gốc đã bị xóa theo kế hoạch kiểm toán EDA phase2 — các phát hiện chính được giữ lại trong các số liệu tính toán bên dưới)*
 
 ---
 
-## 7. Metrics Đã Export
+## 7. Số Liệu Đã Xuất
 
-File `outputs/store_metrics.csv` chứa metrics cho 54 stores:
+File `outputs/store_metrics.csv` chứa số liệu cho 54 cửa hàng:
 
-| Column | Mô tả |
+| Cột | Mô tả |
 |--------|--------|
-| `store_nbr` | Store ID (1-54) |
-| `city`, `state` | Location |
-| `type` | Store type (A-E) |
-| `cluster` | Store cluster (1-17) |
+| `store_nbr` | ID Cửa hàng (1-54) |
+| `city`, `state` | Vị trí |
+| `type` | Loại cửa hàng (A-E) |
+| `cluster` | Cluster cửa hàng (1-17) |
 | `region` | Coastal / Highland |
-| `total_sales` | Tổng sales 2013-2017 |
-| `avg_daily_sales` | Sales trung bình mỗi ngày (per record) |
-| `median_daily_sales` | Median daily sales |
-| `std_daily_sales` | Standard deviation |
-| `cv` | Coefficient of Variation |
-| `zero_sales_pct` | % records có zero sales |
-| `rank_total` | Rank theo total sales |
-| `predictability` | Predictability score (0-1) |
+| `total_sales` | Tổng doanh số 2013-2017 |
+| `avg_daily_sales` | Doanh số trung bình mỗi ngày (mỗi bản ghi) |
+| `median_daily_sales` | Doanh số trung vị hàng ngày |
+| `std_daily_sales` | Độ lệch chuẩn |
+| `cv` | Hệ số Biến Thiên |
+| `zero_sales_pct` | % bản ghi có doanh số bằng không |
+| `rank_total` | Xếp hạng theo tổng doanh số |
+| `predictability` | Điểm khả năng dự đoán (0-1) |
 
 ---
 
 *Notebook: `store_performance_analysis.ipynb`*
-*Generated as part of 03_eda_deep_dive phase*
+*Tạo ra như một phần của giai đoạn 03_eda_deep_dive*
