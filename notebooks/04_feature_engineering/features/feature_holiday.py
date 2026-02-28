@@ -125,8 +125,8 @@ def generate_holiday_features(main_df, holidays_events_df, stores_df):
     return df
 
 if __name__ == "__main__":
-    df_train = pd.read_csv(r'train.csv')
-    df_holidays = pd.read_csv(r'holidays_events_cleaned.csv')
-    df_stores = pd.read_csv(r'stores_cleaned.csv')
+    df_train = pd.read_csv(r'D:\Topic_13_Project\Topic_13_Retail_Store_Sales_Time_Series\data\processed\train_cleaned.csv')
+    df_holidays = pd.read_csv(r'D:\Topic_13_Project\Topic_13_Retail_Store_Sales_Time_Series\data\processed\holidays_events_cleaned.csv')
+    df_stores = pd.read_csv(r'D:\Topic_13_Project\Topic_13_Retail_Store_Sales_Time_Series\data\processed\stores_cleaned.csv')
     df_featured = generate_holiday_features(df_train, df_holidays, df_stores)
     print(df_featured.head())
