@@ -1,48 +1,55 @@
-import numpy as np
-from sklearn.model_selection import KFold
-from category_encoders import TargetEncoder
+import pandas as pd
+from sklearn.preprocessing import LabelEncoder
 
 
-def add_target_encoding(train, test, target="sales", n_splits=5):
+# ======================
+# OIL FEATURES
+# ======================
+
+def create_oil_features(oil_df):
+    oil = oil_df.copy()
+    oil["date"] = pd.to_datetime(oil["date"])
+    oil = oil.sort_values("date").rename(columns={"dcoilwtico": "oil_price"})
+
+    # Safe missing handling (no future info)
+    oil["oil_price"] = oil["oil_price"].ffill()
+
+    # Lag features (historical only)
+    oil["oil_price_lag_7"] = oil["oil_price"].shift(7)
+    oil["oil_price_lag_14"] = oil["oil_price"].shift(14)
+
+    # Rolling trend (shift first to avoid leakage)
+    oil["oil_price_rolling_mean_28"] = (
+        oil["oil_price"].shift(1).rolling(28, min_periods=7).mean()
+    )
+
+    # Weekly shock
+    oil["oil_price_change_pct"] = (
+        oil["oil_price"] / oil["oil_price_lag_7"] - 1
+    )
+
+
+# ======================
+# STORES FEATURES
+# ======================
+
+    def encode_store_features(train, test):
 
     train, test = train.copy(), test.copy()
 
-    # Combine key
-    train["store_family"] = (
-        train["store_nbr"].astype(str) + "_" + train["family"]
-    )
-    test["store_family"] = (
-        test["store_nbr"].astype(str) + "_" + test["family"]
-    )
+    # 1. Label encode store_type (fit on train only)
+    le = LabelEncoder()
+    train["store_type_enc"] = le.fit_transform(train["store_type"])
+    test["store_type_enc"] = le.transform(test["store_type"])
 
-    kf = KFold(n_splits=n_splits, shuffle=False)
-    oof = np.zeros(len(train))
+    # 2. Frequency encode city/state
+    for col in ["city", "state"]:
+        freq = train[col].value_counts(normalize=True)
+        train[f"{col}_freq"] = train[col].map(freq)
+        test[f"{col}_freq"] = test[col].map(freq).fillna(0)
 
-    # ---- Out-of-fold encoding (leakage safe) ----
-    for tr_idx, val_idx in kf.split(train):
-
-        enc = TargetEncoder(cols=["store_family"], smoothing=10)
-
-        # Fit ONLY on training fold
-        enc.fit(
-            train.iloc[tr_idx][["store_family"]],
-            train.iloc[tr_idx][target]
-        )
-
-        # Transform validation fold (never sees its own target)
-        oof[val_idx] = enc.transform(
-            train.iloc[val_idx][["store_family"]]
-        )["store_family"]
-
-    train["store_family_te"] = oof
-
-    # ---- Fit on full train for test ----
-    final_enc = TargetEncoder(cols=["store_family"], smoothing=10)
-    final_enc.fit(train[["store_family"]], train[target])
-
-    # Test uses only train statistics
-    test["store_family_te"] = final_enc.transform(
-        test[["store_family"]]
-    )["store_family"]
+    # 3. cluster giữ nguyên (đã numeric)
 
     return train, test
+
+    return oil
