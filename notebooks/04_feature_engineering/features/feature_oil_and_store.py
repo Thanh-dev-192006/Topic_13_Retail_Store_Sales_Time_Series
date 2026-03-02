@@ -48,7 +48,7 @@ def create_oil_features(oil_df):
         train[f"{col}_freq"] = train[col].map(freq)
         test[f"{col}_freq"] = test[col].map(freq).fillna(0)
 
-    # 3. cluster giữ nguyên (đã numeric)
+    # 3. cluster keep the same
 
     return train, test
 
