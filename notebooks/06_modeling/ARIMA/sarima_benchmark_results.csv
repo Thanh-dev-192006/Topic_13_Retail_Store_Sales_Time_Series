@@ -1,6 +1,0 @@
-store_nbr,family,pattern,rmsle,n_train_days,n_val_days,model_order
-1,BABY CARE,many_zeros,0.0,1574,15,"SARIMA(1, 1, 1)x(1, 1, 1, 7)"
-19,LAWN AND GARDEN,high_volatility,0.0067,1574,15,"SARIMA(1, 1, 1)x(1, 1, 1, 7)"
-44,GROCERY I,high_stable,0.1866,1574,14,"SARIMA(1, 1, 1)x(1, 1, 1, 7)"
-18,PRODUCE,seasonality,0.2216,1574,15,"SARIMA(1, 1, 1)x(1, 1, 1, 7)"
-19,BEAUTY,low_sales,0.6313,1574,15,"SARIMA(1, 1, 1)x(1, 1, 1, 7)"
