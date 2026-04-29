@@ -190,7 +190,9 @@ for _, row in valid_holidays.iterrows():
         df.loc[mask, "is_regional_holiday"] = 1
     elif h_locale == "Local":
         df.loc[mask, "is_local_holiday"] = 1
-    df.loc[mask, "is_transferred_holiday"] = int(row["transferred"])
+    # is_transferred_holiday = 1 cho ngày "make-up" (type='Transfer'), không dùng cột 'transferred'
+    # vì valid_holidays đã filter transferred==False nên cột đó luôn = 0.
+    df.loc[mask, "is_transferred_holiday"] = 1 if row["type"] == "Transfer" else 0
     df.loc[mask, "holiday_type"]           = row["holiday_type_encoded"]
     df.loc[mask, "is_carnaval_feature"]    = row["is_carnaval"]
 
