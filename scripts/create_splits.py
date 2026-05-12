@@ -1,26 +1,3 @@
-"""
-create_splits.py
-================
-Temporal train / validation / test split on train_final.csv.
-
-Split boundaries (fixed, non-random):
-    Train : 2013-01-01  to  2017-06-30  (inclusive)
-    Val   : 2017-07-01  to  2017-07-31  (inclusive)
-    Test  : 2017-08-01  to  2017-08-15  (inclusive)
-
-Outputs saved to data/processed/splits/:
-    train_features.csv   -- X_train (all feature columns)
-    train_target.csv     -- y_train (sales column)
-    val_features.csv     -- X_val
-    val_target.csv       -- y_val
-    test_features.csv    -- X_test
-    test_target.csv      -- y_test
-
-Feature columns = ALL columns EXCEPT: sales, date, id
-
-Usage:
-    python scripts/create_splits.py
-"""
 
 import os
 import sys
